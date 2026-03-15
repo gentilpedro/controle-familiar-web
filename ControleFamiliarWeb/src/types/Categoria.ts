@@ -3,3 +3,8 @@ export interface Categoria {
   descricao: string;
   finalidade: number;
 }
+
+export interface CategoriaResumo{
+  categoria: string;
+  total: number;
+}
