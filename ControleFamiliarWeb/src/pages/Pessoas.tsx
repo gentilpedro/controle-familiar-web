@@ -7,12 +7,13 @@ export default function Pessoas() {
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [nome, setNome] = useState("");
   const [idade, setIdade] = useState<number>(0);
+  const [mostrarForm, setMostrarForm] = useState(false);
 
   async function carregar() {
 
     const response = await api.get("/pessoas");
 
-    setPessoas(response.data.data);
+    setPessoas(response.data);
 
   }
 
@@ -27,6 +28,7 @@ export default function Pessoas() {
 
     setNome("");
     setIdade(0);
+    setMostrarForm(false);
 
     carregar();
 
@@ -37,43 +39,85 @@ export default function Pessoas() {
   }, []);
 
   return (
-    <div>
+
+    <div style={{ padding: "30px" }}>
 
       <h1>Pessoas</h1>
 
-      <form onSubmit={criarPessoa} style={{marginBottom:"20px"}}>
+      <button
+        onClick={() => setMostrarForm(true)}
+        style={{ marginBottom: "20px" }}
+      >
+        Nova Pessoa
+      </button>
 
-        <input
-          placeholder="Nome"
-          value={nome}
-          onChange={(e)=>setNome(e.target.value)}
-        />
+      {mostrarForm && (
 
-        <input
-          placeholder="Idade"
-          type="number"
-          value={idade}
-          onChange={(e)=>setIdade(Number(e.target.value))}
-        />
+        <form onSubmit={criarPessoa} style={{ marginBottom: "30px" }}>
 
-        <button type="submit">
-          Criar
-        </button>
+          <input
+            placeholder="Nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            style={{ marginRight: "10px" }}
+          />
 
-      </form>
+          <input
+            placeholder="Idade"
+            type="number"
+            value={idade}
+            onChange={(e) => setIdade(Number(e.target.value))}
+            style={{ marginRight: "10px" }}
+          />
 
-      <ul>
+          <button type="submit">
+            Salvar
+          </button>
 
-        {pessoas.map(p => (
+          <button
+            type="button"
+            onClick={() => setMostrarForm(false)}
+            style={{ marginLeft: "10px" }}
+          >
+            Cancelar
+          </button>
 
-          <li key={p.id}>
-            {p.nome} - {p.idade} anos
-          </li>
+        </form>
 
-        ))}
+      )}
 
-      </ul>
+      <table border={1} cellPadding={10} width="100%">
+
+        <thead>
+
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Idade</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {pessoas.map(p => (
+
+            <tr key={p.id}>
+
+              <td>{p.id}</td>
+              <td>{p.nome}</td>
+              <td>{p.idade} anos</td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
 
     </div>
+
   );
+
 }
