@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
-
 import type { Categoria } from "../types/Categoria";
-
 
 export default function Categorias() {
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [descricao, setDescricao] = useState("");
   const [finalidade, setFinalidade] = useState(1);
+  const [mostrarForm, setMostrarForm] = useState(false);
 
   async function carregar() {
 
     const response = await api.get("/categorias");
 
-    setCategorias(response.data.data);
+    setCategorias(response.data);
 
   }
 
@@ -29,9 +28,17 @@ export default function Categorias() {
 
     setDescricao("");
     setFinalidade(1);
+    setMostrarForm(false);
 
     carregar();
+  }
 
+  function getFinalidadeTexto(finalidade: number) {
+
+    if (finalidade === 1) return "Receita";
+    if (finalidade === 2) return "Despesa";
+
+    return "Ambas";
   }
 
   useEffect(() => {
@@ -39,48 +46,73 @@ export default function Categorias() {
   }, []);
 
   return (
-    <div>
+
+    <div style={{ padding: "30px" }}>
 
       <h1>Categorias</h1>
 
-      <form onSubmit={criarCategoria} style={{marginBottom:"20px"}}>
+      <button onClick={() => setMostrarForm(true)}>
+        Nova Categoria
+      </button>
 
-        <input
-          placeholder="Descrição"
-          value={descricao}
-          onChange={(e)=>setDescricao(e.target.value)}
-        />
+      {mostrarForm && (
 
-        <label htmlFor="finalidade">Finalidade: </label>
-        <select
-          id="finalidade"
-          value={finalidade}
-          onChange={(e)=>setFinalidade(Number(e.target.value))}
-        >
+        <form onSubmit={criarCategoria} style={{ marginTop: "20px" }}>
 
-          <option value={1}>Receita</option>
-          <option value={2}>Despesa</option>
-          <option value={3}>Ambas</option>
+          <input
+            placeholder="Descrição"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
 
-        </select>
+          <select
+            value={finalidade}
+            onChange={(e) => setFinalidade(Number(e.target.value))}
+          >
 
-        <button type="submit">
-          Criar
-        </button>
+            <option value={1}>Receita</option>
+            <option value={2}>Despesa</option>
+            <option value={3}>Ambas</option>
 
-      </form>
+          </select>
 
-      <ul>
+          <button type="submit">
+            Salvar
+          </button>
 
-        {categorias.map(c => (
+        </form>
 
-          <li key={c.id}>
-            {c.descricao} - {c.finalidade}
-          </li>
+      )}
 
-        ))}
+      <table border={1} cellPadding={10} style={{ marginTop: "20px", width: "100%" }}>
 
-      </ul>
+        <thead>
+
+          <tr>
+            <th>ID</th>
+            <th>Descrição</th>
+            <th>Finalidade</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {categorias.map((c) => (
+
+            <tr key={c.id}>
+
+              <td>{c.id}</td>
+              <td>{c.descricao}</td>
+              <td>{getFinalidadeTexto(c.finalidade)}</td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
 
     </div>
   );
