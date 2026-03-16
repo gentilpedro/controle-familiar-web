@@ -1,48 +1,23 @@
 import { Link, Outlet } from "react-router-dom";
 
 export default function Layout() {
-
   return (
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="sidebar-title">Financeiro</div>
 
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-
-      {/* Menu lateral */}
-      <aside
-        style={{
-          width: "220px",
-          background: "#1e293b",
-          color: "white",
-          padding: "20px"
-        }}
-      >
-
-        <h2>Financeiro</h2>
-
-        <nav style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-
-          <Link to="/" style={{ color: "white" }}>Home</Link>
-
-          <Link to="/pessoas" style={{ color: "white" }}>Pessoas</Link>
-
-          <Link to="/categorias" style={{ color: "white" }}>Categorias</Link>
-
-          <Link to="/transacoes" style={{ color: "white" }}>Transações</Link>
-
-          <Link to="/relatorios" style={{ color: "white" }}>Relatórios</Link>
-
+        <nav className="sidebar-nav">
+          <Link className="sidebar-link" to="/">Home</Link>
+          <Link className="sidebar-link" to="/pessoas">Pessoas</Link>
+          <Link className="sidebar-link" to="/categorias">Categorias</Link>
+          <Link className="sidebar-link" to="/transacoes">Transações</Link>
+          <Link className="sidebar-link" to="/relatorios">Relatórios</Link>
         </nav>
-
       </aside>
 
-      {/* Conteúdo */}
-      <main style={{ flex: 1, padding: "30px" }}>
-
+      <main className="page">
         <Outlet />
-
       </main>
-
     </div>
-
   );
-
 }

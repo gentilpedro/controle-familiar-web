@@ -54,89 +54,86 @@ export default function Relatorios() {
 
   const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
 
-  return (
-    <div style={{padding:"30px"}}>
+const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
 
-      <h1>Dashboard Financeiro</h1>
+return (
+  <>
+    <div className="page-header">
+      <div>
+        <h1 className="page-title">Dashboard Financeiro</h1>
+        <p className="page-subtitle">Acompanhe receitas, despesas e saldo geral.</p>
+      </div>
+    </div>
 
-      {/* GRÁFICO DE BARRAS */}
-      <h2>Receitas vs Despesas por Pessoa</h2>
+    <div className="summary-grid">
+      <div className="summary-card">
+        <div className="summary-label">Receitas</div>
+        <div className="summary-value receita">
+          {relatorio.totalReceitas.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })}
+        </div>
+      </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="summary-card">
+        <div className="summary-label">Despesas</div>
+        <div className="summary-value despesa">
+          {relatorio.totalDespesas.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })}
+        </div>
+      </div>
 
+      <div className="summary-card">
+        <div className="summary-label">Saldo Líquido</div>
+        <div className="summary-value saldo">
+          {saldoLiquido.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })}
+        </div>
+      </div>
+    </div>
+
+    <div className="chart-card">
+      <h2 className="section-title">Receitas vs Despesas por Pessoa</h2>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart data={relatorio.pessoas}>
-
           <CartesianGrid strokeDasharray="3 3" />
-
           <XAxis dataKey="pessoa" />
-
           <YAxis />
-
           <Tooltip />
-
           <Legend />
-
-          <Bar dataKey="totalReceitas" fill="#4caf50" name="Receitas" />
-
-          <Bar dataKey="totalDespesas" fill="#f44336" name="Despesas" />
-
+          <Bar dataKey="totalReceitas" fill="#16a34a" name="Receitas" />
+          <Bar dataKey="totalDespesas" fill="#dc2626" name="Despesas" />
         </BarChart>
-
       </ResponsiveContainer>
+    </div>
 
-
-      {/* GRÁFICO DE PIZZA */}
-      <h2>Despesas por Categoria</h2>
-
-      <ResponsiveContainer width="100%" height={300}>
-
+    <div className="chart-card">
+      <h2 className="section-title">Despesas por Categoria</h2>
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
-
           <Pie
             data={categorias}
             dataKey="total"
             nameKey="categoria"
             cx="50%"
             cy="50%"
-            outerRadius={100}
+            outerRadius={110}
             label
           >
-
             {categorias.map((entry, index) => (
-
-              <Cell
-                key={index}
-                fill={cores[index % cores.length]}
-              />
-
+              <Cell key={index} fill={cores[index % cores.length]} />
             ))}
-
           </Pie>
-
           <Tooltip />
-
           <Legend />
-
         </PieChart>
-
       </ResponsiveContainer>
-
-
-      {/* TOTAIS GERAIS */}
-      <h2>Totais Gerais</h2>
-
-      <p>
-        Receitas: <b>R$ {relatorio.totalReceitas}</b>
-      </p>
-
-      <p>
-        Despesas: <b>R$ {relatorio.totalDespesas}</b>
-      </p>
-
-      <p>
-        Saldo Líquido: <b>R$ {saldoLiquido}</b>
-      </p>
-
     </div>
-  );
+  </>
+);
 }
