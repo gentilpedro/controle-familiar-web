@@ -17,7 +17,6 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-
 export default function Relatorios() {
 
   const [relatorio, setRelatorio] = useState<Relatorio>();
@@ -28,8 +27,14 @@ export default function Relatorios() {
     const pessoasResponse = await api.get("/relatorios/totais-por-pessoa");
     const categoriasResponse = await api.get("/relatorios/totais-por-categoria");
 
-    setRelatorio(pessoasResponse.data.data);
-    setCategorias(categoriasResponse.data);
+    setRelatorio(pessoasResponse.data);
+
+    const categoriasFormatadas = categoriasResponse.data.map((c:any)=>({
+      categoria: c.categoria,
+      total: c.total
+    }));
+
+    setCategorias(categoriasFormatadas);
 
   }
 
@@ -47,13 +52,15 @@ export default function Relatorios() {
     "#9c27b0"
   ];
 
+  const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
+
   return (
-    <div>
+    <div style={{padding:"30px"}}>
 
       <h1>Dashboard Financeiro</h1>
 
       {/* GRÁFICO DE BARRAS */}
-      <h2>Receitas vs Despesas</h2>
+      <h2>Receitas vs Despesas por Pessoa</h2>
 
       <ResponsiveContainer width="100%" height={300}>
 
@@ -127,7 +134,7 @@ export default function Relatorios() {
       </p>
 
       <p>
-        Saldo Líquido: <b>R$ {relatorio.saldoLiquido}</b>
+        Saldo Líquido: <b>R$ {saldoLiquido}</b>
       </p>
 
     </div>
