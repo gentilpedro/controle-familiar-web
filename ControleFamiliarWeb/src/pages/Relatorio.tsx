@@ -52,8 +52,6 @@ export default function Relatorios() {
     "#9c27b0"
   ];
 
-  const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
-
 const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
 
 return (
