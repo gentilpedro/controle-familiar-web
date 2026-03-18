@@ -51,6 +51,45 @@ export default function Relatorios() {
     "#f44336",
     "#9c27b0"
   ];
+async function baixarExcelPessoa() {
+
+  const response = await api.get("/relatorios/excel-pessoa", {
+    responseType: "blob"
+  });
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.setAttribute("download", "relatorio-pessoas.xlsx");
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+}
+
+async function baixarExcelCategoria() {
+
+  const response = await api.get("/relatorios/excel-categoria", {
+    responseType: "blob"
+  });
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.setAttribute("download", "relatorio-categorias.xlsx");
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+}
 
 const saldoLiquido = relatorio.totalReceitas - relatorio.totalDespesas;
 
@@ -95,6 +134,10 @@ return (
       </div>
     </div>
     <div className="Section-DespXPessoa">
+        <button className="btn btn-danger btn-excel"
+             onClick={baixarExcelPessoa}>
+        Exportar Excel
+      </button>
       <div className="chart-card">
         <h2 className="section-title">Receitas vs Despesas por Pessoa</h2>
         <ResponsiveContainer width="100%" height={320}>
@@ -109,14 +152,14 @@ return (
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <button className="btn -btn-sucess"
-             onClick={() => window.open("/relatorios/excel-pessoa")}>
-        Exportar Excel
-      </button>
     </div>
-    <br />
+  
     
     <div className="section-DespXCateg">
+         <button className="btn btn-danger btn-excel"
+             onClick={baixarExcelCategoria}>
+        Exportar Excel
+      </button>
     <div className="chart-card">
       <h2 className="section-title">Despesas por Categoria</h2>
       <ResponsiveContainer width="100%" height={320}>
@@ -139,10 +182,6 @@ return (
         </PieChart>
       </ResponsiveContainer>
     </div>
-    <button className="btn -btn-sucess"
-             onClick={() => window.open("/relatorios/excel-categoria")}>
-        Exportar Excel
-      </button>
     </div>
   </>
 );
