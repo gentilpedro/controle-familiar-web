@@ -94,22 +94,29 @@ return (
         </div>
       </div>
     </div>
-
-    <div className="chart-card">
-      <h2 className="section-title">Receitas vs Despesas por Pessoa</h2>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={relatorio.pessoas}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="pessoa" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="totalReceitas" fill="#16a34a" name="Receitas" />
-          <Bar dataKey="totalDespesas" fill="#dc2626" name="Despesas" />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="Section-DespXPessoa">
+      <div className="chart-card">
+        <h2 className="section-title">Receitas vs Despesas por Pessoa</h2>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={relatorio.pessoas}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="pessoa" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="totalReceitas" fill="#16a34a" name="Receitas" />
+            <Bar dataKey="totalDespesas" fill="#dc2626" name="Despesas" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <button className="btn -btn-sucess"
+             onClick={() => window.open("/relatorios/excel-pessoa")}>
+        Exportar Excel
+      </button>
     </div>
-
+    <br />
+    
+    <div className="section-DespXCateg">
     <div className="chart-card">
       <h2 className="section-title">Despesas por Categoria</h2>
       <ResponsiveContainer width="100%" height={320}>
@@ -131,6 +138,11 @@ return (
           <Legend />
         </PieChart>
       </ResponsiveContainer>
+    </div>
+    <button className="btn -btn-sucess"
+             onClick={() => window.open("/relatorios/excel-categoria")}>
+        Exportar Excel
+      </button>
     </div>
   </>
 );
