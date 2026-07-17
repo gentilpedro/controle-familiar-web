@@ -1,12 +1,17 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import { AuthProvider } from "../context/AuthContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 import Home from "../pages/Home";
 import Pessoas from "../pages/Pessoas";
 import Categorias from "../pages/Categorias";
 import Transacoes from "../pages/Transacoes";
 import Relatorios from "../pages/Relatorio";
+import Login from "../pages/Login";
+import Registrar from "../pages/Registrar";
+import MinhaFamilia from "../pages/MinhaFamilia";
 
 export default function AppRoutes() {
 
@@ -14,23 +19,40 @@ export default function AppRoutes() {
 
     <BrowserRouter>
 
-      <Routes>
+      <AuthProvider>
 
-        <Route path="/" element={<Layout />}>
+        <Routes>
 
-          <Route index element={<Home />} />
+          <Route path="/login" element={<Login />} />
 
-          <Route path="pessoas" element={<Pessoas />} />
+          <Route path="/registrar" element={<Registrar />} />
 
-          <Route path="categorias" element={<Categorias />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
 
-          <Route path="transacoes" element={<Transacoes />} />
+            <Route index element={<Home />} />
 
-          <Route path="relatorios" element={<Relatorios />} />
+            <Route path="pessoas" element={<Pessoas />} />
 
-        </Route>
+            <Route path="categorias" element={<Categorias />} />
 
-      </Routes>
+            <Route path="transacoes" element={<Transacoes />} />
+
+            <Route path="relatorios" element={<Relatorios />} />
+
+            <Route path="minha-familia" element={<MinhaFamilia />} />
+
+          </Route>
+
+        </Routes>
+
+      </AuthProvider>
 
     </BrowserRouter>
 
