@@ -18,6 +18,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<void>;
   registrar: (payload: RegistrarPayload) => Promise<void>;
   logout: () => void;
+  atualizarFamilia: (familia: Familia) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -49,6 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setFamilia(null);
   }
 
+  function atualizarFamilia(novaFamilia: Familia) {
+    setFamilia(novaFamilia);
+
+    setUsuario((atual) => {
+      if (!atual) return atual;
+      const eu = novaFamilia.membros.find((m) => m.id === atual.id);
+      return eu ? { ...atual, ehAdministrador: eu.ehAdministrador } : atual;
+    });
+  }
+
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY);
 
@@ -70,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ usuario, familia, carregando, login, registrar, logout }}>
+    <AuthContext.Provider
+      value={{ usuario, familia, carregando, login, registrar, logout, atualizarFamilia }}
+    >
       {children}
     </AuthContext.Provider>
   );

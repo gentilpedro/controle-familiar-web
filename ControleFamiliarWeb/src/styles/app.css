@@ -411,6 +411,16 @@ a {
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.auth-success {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--success);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 .auth-footer {

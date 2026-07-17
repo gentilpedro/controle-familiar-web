@@ -1,19 +1,21 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Registrar() {
   const { registrar } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const codigoDaUrl = searchParams.get("codigo") ?? "";
 
-  const [modoFamilia, setModoFamilia] = useState<"Nova" | "Entrar">("Nova");
+  const [modoFamilia, setModoFamilia] = useState<"Nova" | "Entrar">(codigoDaUrl ? "Entrar" : "Nova");
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nomeFamilia, setNomeFamilia] = useState("");
-  const [codigoConvite, setCodigoConvite] = useState("");
+  const [codigoConvite, setCodigoConvite] = useState(codigoDaUrl);
 
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
