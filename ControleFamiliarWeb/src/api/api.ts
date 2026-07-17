@@ -3,7 +3,7 @@ import axios from "axios";
 export const TOKEN_STORAGE_KEY = "controle-familiar:token";
 
 export const api = axios.create({
-  baseURL: "https://localhost:7106/api"
+  baseURL: import.meta.env.VITE_API_URL ?? "https://localhost:7106/api"
 });
 
 api.interceptors.request.use((config) => {
