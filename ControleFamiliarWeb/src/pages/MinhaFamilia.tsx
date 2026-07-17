@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { api } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import type { ApiEnvelope, Familia } from "../types/Auth";
@@ -14,11 +13,10 @@ export default function MinhaFamilia() {
 
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
-  const [enviandoConvite, setEnviandoConvite] = useState(false);
-  const [emailConvite, setEmailConvite] = useState("");
   const [carregandoAcao, setCarregandoAcao] = useState<string | null>(null);
 
   const souAdministrador = familia?.membros.find((m) => m.id === usuario?.id)?.ehAdministrador ?? false;
+  const linkConvite = familia ? `${window.location.origin}/registrar?codigo=${familia.codigoConvite}` : "";
 
   function limparMensagens() {
     setErro("");
@@ -55,19 +53,14 @@ export default function MinhaFamilia() {
     return executar(`rebaixar-${membroId}`, () => api.post<ApiEnvelope<Familia>>(`/familia/membros/${membroId}/rebaixar`));
   }
 
-  async function enviarConvite(e: FormEvent) {
-    e.preventDefault();
+  async function copiarLinkConvite() {
     limparMensagens();
-    setEnviandoConvite(true);
 
     try {
-      await api.post("/familia/convidar", { email: emailConvite });
-      setSucesso(`Convite enviado para ${emailConvite}.`);
-      setEmailConvite("");
-    } catch (e) {
-      setErro(mensagemDeErro(e));
-    } finally {
-      setEnviandoConvite(false);
+      await navigator.clipboard.writeText(linkConvite);
+      setSucesso("Link de convite copiado — é só colar e mandar pra pessoa.");
+    } catch {
+      setErro("Não consegui copiar automaticamente. Copie o link manualmente.");
     }
   }
 
@@ -92,8 +85,12 @@ export default function MinhaFamilia() {
         <h2 style={{ marginTop: 0 }}>{familia?.nome}</h2>
 
         <p className="summary-label">Código de convite</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <span className="invite-code">{familia?.codigoConvite}</span>
+
+          <button className="btn btn-primary" onClick={copiarLinkConvite}>
+            Copiar link de convite
+          </button>
 
           {souAdministrador && (
             <button
@@ -105,26 +102,11 @@ export default function MinhaFamilia() {
             </button>
           )}
         </div>
-      </div>
 
-      {souAdministrador && (
-        <div className="card">
-          <h2 className="section-title">Convidar por e-mail</h2>
-          <form className="form-row pessoas" onSubmit={enviarConvite}>
-            <input
-              className="input"
-              type="email"
-              placeholder="email@exemplo.com"
-              value={emailConvite}
-              onChange={(e) => setEmailConvite(e.target.value)}
-              required
-            />
-            <button className="btn btn-primary" type="submit" disabled={enviandoConvite}>
-              {enviandoConvite ? "Enviando..." : "Enviar convite"}
-            </button>
-          </form>
-        </div>
-      )}
+        <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 12, marginBottom: 0 }}>
+          Manda o link pronto (whatsapp, e-mail, etc.) — quem abrir já cai no cadastro com o código preenchido.
+        </p>
+      </div>
 
       <div className="card">
         <h2 className="section-title">Membros</h2>
