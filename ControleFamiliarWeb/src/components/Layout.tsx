@@ -16,13 +16,13 @@ export default function Layout() {
         <div className="sidebar-title">Financeiro</div>
 
         <nav className="sidebar-nav">
-          <Link className="sidebar-link" to="/">Home</Link>
-          <Link className="sidebar-link" to="/pessoas">Pessoas</Link>
-          <Link className="sidebar-link" to="/categorias">Categorias</Link>
-          <Link className="sidebar-link" to="/transacoes">Transações</Link>
-          <Link className="sidebar-link" to="/relatorios">Relatórios</Link>
-          <Link className="sidebar-link" to="/minha-familia">Minha Família</Link>
-          <Link className="sidebar-link" to="/meus-dados">Meus Dados</Link>
+          <Link className="sidebar-link" to="/painel">Home</Link>
+          <Link className="sidebar-link" to="/painel/pessoas">Pessoas</Link>
+          <Link className="sidebar-link" to="/painel/categorias">Categorias</Link>
+          <Link className="sidebar-link" to="/painel/transacoes">Transações</Link>
+          <Link className="sidebar-link" to="/painel/relatorios">Relatórios</Link>
+          <Link className="sidebar-link" to="/painel/minha-familia">Minha Família</Link>
+          <Link className="sidebar-link" to="/painel/meus-dados">Meus Dados</Link>
         </nav>
 
         <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
