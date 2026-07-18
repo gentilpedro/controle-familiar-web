@@ -417,6 +417,25 @@ a {
   flex: 1;
 }
 
+.auth-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.auth-checkbox input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.auth-checkbox a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
 .auth-error {
   background: rgba(220, 38, 38, 0.1);
   color: var(--danger);

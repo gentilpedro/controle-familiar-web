@@ -31,6 +31,15 @@ export default function Layout() {
           <button className="btn btn-secondary" style={{ width: "100%" }} onClick={handleLogout}>
             Sair
           </button>
+
+          <Link
+            to="/privacidade"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", marginTop: 14, textAlign: "center", color: "#94a3b8", fontSize: 12 }}
+          >
+            Política de Privacidade
+          </Link>
         </div>
       </aside>
 
