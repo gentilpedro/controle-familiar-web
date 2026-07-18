@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/api";
 import type { Relatorio } from "../types/Relatorios";
 import type { CategoriaResumo } from "../types/Categoria";
+import { formatCurrency } from "../utils/format";
 
 import {
   PieChart,
@@ -24,17 +25,11 @@ export default function Relatorios() {
 
   async function carregar() {
 
-    const pessoasResponse = await api.get("/relatorios/totais-por-pessoa");
-    const categoriasResponse = await api.get("/relatorios/totais-por-categoria");
+    const pessoasResponse = await api.get<Relatorio>("/relatorios/totais-por-pessoa");
+    const categoriasResponse = await api.get<CategoriaResumo[]>("/relatorios/totais-por-categoria");
 
     setRelatorio(pessoasResponse.data);
-
-    const categoriasFormatadas = categoriasResponse.data.map((c:any)=>({
-      categoria: c.categoria,
-      total: c.total
-    }));
-
-    setCategorias(categoriasFormatadas);
+    setCategorias(categoriasResponse.data);
 
   }
 
@@ -106,30 +101,21 @@ return (
       <div className="summary-card">
         <div className="summary-label">Receitas</div>
         <div className="summary-value receita">
-          {relatorio.totalReceitas.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-          })}
+          {formatCurrency(relatorio.totalReceitas)}
         </div>
       </div>
 
       <div className="summary-card">
         <div className="summary-label">Despesas</div>
         <div className="summary-value despesa">
-          {relatorio.totalDespesas.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-          })}
+          {formatCurrency(relatorio.totalDespesas)}
         </div>
       </div>
 
       <div className="summary-card">
         <div className="summary-label">Saldo Líquido</div>
         <div className="summary-value saldo">
-          {saldoLiquido.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-          })}
+          {formatCurrency(saldoLiquido)}
         </div>
       </div>
     </div>

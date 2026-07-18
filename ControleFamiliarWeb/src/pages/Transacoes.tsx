@@ -4,6 +4,8 @@ import { api } from "../api/api";
 import type { Transacao } from "../types/Transacao";
 import type { Categoria } from "../types/Categoria";
 import type { Pessoa } from "../types/Pessoa";
+import { classeBadge, textoTipoTransacao } from "../utils/badge";
+import { formatCurrency } from "../utils/format";
 
 export default function Transacoes() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
@@ -46,14 +48,6 @@ export default function Transacoes() {
     setMostrarForm(false);
 
     carregar();
-  }
-
-  function getTipoTexto(tipo: number) {
-    return tipo === 1 ? "Receita" : "Despesa";
-  }
-
-  function getTipoClasse(tipo: number) {
-    return tipo === 1 ? "badge badge-receita" : "badge badge-despesa";
   }
 
   useEffect(() => {
@@ -162,15 +156,10 @@ export default function Transacoes() {
                 <tr key={t.id}>
                   <td>{t.id}</td>
                   <td>{t.descricao}</td>
+                  <td>{formatCurrency(Number(t.valor))}</td>
                   <td>
-                    {Number(t.valor).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL"
-                    })}
-                  </td>
-                  <td>
-                    <span className={getTipoClasse(t.tipo)}>
-                      {getTipoTexto(t.tipo)}
+                    <span className={classeBadge(textoTipoTransacao(t.tipo))}>
+                      {textoTipoTransacao(t.tipo)}
                     </span>
                   </td>
                   <td>{t.pessoa}</td>

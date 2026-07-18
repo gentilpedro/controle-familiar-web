@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
 import type { Categoria } from "../types/Categoria";
+import { classeBadge, textoFinalidadeCategoria } from "../utils/badge";
 
 export default function Categorias() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -25,18 +26,6 @@ export default function Categorias() {
     setFinalidade(1);
     setMostrarForm(false);
     carregar();
-  }
-
-  function getFinalidadeTexto(finalidade: number) {
-    if (finalidade === 1) return "Receita";
-    if (finalidade === 2) return "Despesa";
-    return "Ambas";
-  }
-
-  function getFinalidadeClasse(finalidade: number) {
-    if (finalidade === 1) return "badge badge-receita";
-    if (finalidade === 2) return "badge badge-despesa";
-    return "badge badge-ambas";
   }
 
   useEffect(() => {
@@ -110,8 +99,8 @@ export default function Categorias() {
                   <td>{c.id}</td>
                   <td>{c.descricao}</td>
                   <td>
-                    <span className={getFinalidadeClasse(c.finalidade)}>
-                      {getFinalidadeTexto(c.finalidade)}
+                    <span className={classeBadge(textoFinalidadeCategoria(c.finalidade))}>
+                      {textoFinalidadeCategoria(c.finalidade)}
                     </span>
                   </td>
                 </tr>
