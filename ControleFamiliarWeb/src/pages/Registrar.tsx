@@ -70,27 +70,36 @@ export default function Registrar() {
         {erro && <div className="auth-error">{erro}</div>}
 
         <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="sr-only" htmlFor="registrar-nome">Seu nome</label>
           <input
+            id="registrar-nome"
             className="input"
             placeholder="Seu nome"
+            autoComplete="name"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required
           />
 
+          <label className="sr-only" htmlFor="registrar-email">Email</label>
           <input
+            id="registrar-email"
             className="input"
             type="email"
             placeholder="Email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
+          <label className="sr-only" htmlFor="registrar-senha">Senha (mínimo 6 caracteres)</label>
           <input
+            id="registrar-senha"
             className="input"
             type="password"
             placeholder="Senha (mínimo 6 caracteres)"
+            autoComplete="new-password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             minLength={6}
@@ -98,20 +107,28 @@ export default function Registrar() {
           />
 
           {modoFamilia === "Nova" ? (
-            <input
-              className="input"
-              placeholder="Nome da família (opcional)"
-              value={nomeFamilia}
-              onChange={(e) => setNomeFamilia(e.target.value)}
-            />
+            <>
+              <label className="sr-only" htmlFor="registrar-nome-familia">Nome da família (opcional)</label>
+              <input
+                id="registrar-nome-familia"
+                className="input"
+                placeholder="Nome da família (opcional)"
+                value={nomeFamilia}
+                onChange={(e) => setNomeFamilia(e.target.value)}
+              />
+            </>
           ) : (
-            <input
-              className="input"
-              placeholder="Código de convite da família"
-              value={codigoConvite}
-              onChange={(e) => setCodigoConvite(e.target.value.toUpperCase())}
-              required
-            />
+            <>
+              <label className="sr-only" htmlFor="registrar-codigo-convite">Código de convite da família</label>
+              <input
+                id="registrar-codigo-convite"
+                className="input"
+                placeholder="Código de convite da família"
+                value={codigoConvite}
+                onChange={(e) => setCodigoConvite(e.target.value.toUpperCase())}
+                required
+              />
+            </>
           )}
 
           <button className="btn btn-primary" type="submit" disabled={enviando}>

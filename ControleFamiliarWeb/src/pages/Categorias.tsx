@@ -58,14 +58,18 @@ export default function Categorias() {
       {mostrarForm && (
         <div className="card">
           <form onSubmit={criarCategoria} className="form-row categorias">
+            <label className="sr-only" htmlFor="categoria-descricao">Descrição da categoria</label>
             <input
+              id="categoria-descricao"
               className="input"
               placeholder="Descrição da categoria"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
             />
 
+            <label className="sr-only" htmlFor="categoria-finalidade">Finalidade</label>
             <select
+              id="categoria-finalidade"
               className="select"
               value={finalidade}
               onChange={(e) => setFinalidade(Number(e.target.value))}
