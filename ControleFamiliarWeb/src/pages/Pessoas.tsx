@@ -19,6 +19,11 @@ export default function Pessoas() {
   const [enviando, setEnviando] = useState(false);
   const [erroAcao, setErroAcao] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const [cienciaMenor, setCienciaMenor] = useState(false);
+
+  // LGPD, art. 14: cadastro de menor de idade exige confirmacao explicita
+  // de que quem esta preenchendo e o responsavel legal.
+  const ehMenor = idade < 18;
 
   function limparMensagens() {
     setErroAcao("");
@@ -30,11 +35,20 @@ export default function Pessoas() {
     setPessoaAtual(pessoa);
     setNome(pessoa.nome);
     setIdade(pessoa.idade);
+    setCienciaMenor(false);
     setEditModal(true);
   }
 
   async function salvarEdicao() {
     if (!pessoaAtual) return;
+
+    // O modal de edicao nao esta dentro de um <form>, entao o required
+    // nativo do checkbox (usado no formulario de criacao) nao se aplica
+    // aqui - a checagem precisa ser explicita.
+    if (ehMenor && !cienciaMenor) {
+      setErroAcao("Confirme que é responsável legal pela pessoa antes de salvar.");
+      return;
+    }
 
     limparMensagens();
     setEnviando(true);
@@ -61,6 +75,7 @@ export default function Pessoas() {
       await api.post("/pessoas", { nome, idade });
       setNome("");
       setIdade(0);
+      setCienciaMenor(false);
       setMostrarForm(false);
       setSucesso("Pessoa cadastrada com sucesso.");
       await recarregar();
@@ -135,6 +150,18 @@ export default function Pessoas() {
               value={idade}
               onChange={(e) => setIdade(Number(e.target.value))}
             />
+
+            {ehMenor && (
+              <label className="auth-checkbox" style={{ gridColumn: "1 / -1" }}>
+                <input
+                  type="checkbox"
+                  checked={cienciaMenor}
+                  onChange={(e) => setCienciaMenor(e.target.checked)}
+                  required
+                />
+                Confirmo que sou responsável legal por esta pessoa e autorizo o cadastro dos dados dela.
+              </label>
+            )}
 
             <button className="btn btn-success" type="submit" disabled={enviando}>
               {enviando ? "Salvando..." : "Salvar"}
@@ -225,6 +252,19 @@ export default function Pessoas() {
             value={idade}
             onChange={(e) => setIdade(Number(e.target.value))}
           />
+
+          {ehMenor && (
+            <label className="auth-checkbox">
+              <input
+                type="checkbox"
+                checked={cienciaMenor}
+                onChange={(e) => setCienciaMenor(e.target.checked)}
+              />
+              Confirmo que sou responsável legal por esta pessoa e autorizo o cadastro dos dados dela.
+            </label>
+          )}
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
 
           <button
             className="btn btn-success"
