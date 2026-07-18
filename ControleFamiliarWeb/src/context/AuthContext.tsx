@@ -39,6 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setFamilia(null);
   }
 
+  function atualizarUsuario(novoUsuario: Usuario) {
+    setUsuario(novoUsuario);
+  }
+
   function atualizarFamilia(novaFamilia: Familia) {
     setFamilia(novaFamilia);
 
@@ -77,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, familia, carregando, login, registrar, logout, atualizarFamilia }}
+      value={{ usuario, familia, carregando, login, registrar, logout, atualizarFamilia, atualizarUsuario }}
     >
       {children}
     </AuthContext.Provider>
