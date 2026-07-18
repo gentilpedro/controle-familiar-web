@@ -22,6 +22,7 @@ export default function Layout() {
           <Link className="sidebar-link" to="/transacoes">Transações</Link>
           <Link className="sidebar-link" to="/relatorios">Relatórios</Link>
           <Link className="sidebar-link" to="/minha-familia">Minha Família</Link>
+          <Link className="sidebar-link" to="/meus-dados">Meus Dados</Link>
         </nav>
 
         <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.15)" }}>

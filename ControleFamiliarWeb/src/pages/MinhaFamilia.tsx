@@ -1,12 +1,8 @@
 import { useState } from "react";
 import { api } from "../api/api";
 import { useAuth } from "../hooks/useAuth";
+import { mensagemDeErro } from "../utils/erro";
 import type { ApiEnvelope, Familia } from "../types/Auth";
-
-function mensagemDeErro(erro: unknown): string {
-  const resposta = (erro as { response?: { data?: { message?: string } } })?.response?.data?.message;
-  return resposta ?? "Não foi possível concluir a ação.";
-}
 
 export default function MinhaFamilia() {
   const { usuario, familia, atualizarFamilia } = useAuth();

@@ -13,6 +13,7 @@ const Relatorios = lazy(() => import("../pages/Relatorio"));
 const Login = lazy(() => import("../pages/Login"));
 const Registrar = lazy(() => import("../pages/Registrar"));
 const MinhaFamilia = lazy(() => import("../pages/MinhaFamilia"));
+const MeusDados = lazy(() => import("../pages/MeusDados"));
 const Privacidade = lazy(() => import("../pages/Privacidade"));
 
 export default function AppRoutes() {
@@ -41,6 +42,7 @@ export default function AppRoutes() {
               <Route path="transacoes" element={<Transacoes />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="minha-familia" element={<MinhaFamilia />} />
+              <Route path="meus-dados" element={<MeusDados />} />
             </Route>
           </Routes>
         </Suspense>

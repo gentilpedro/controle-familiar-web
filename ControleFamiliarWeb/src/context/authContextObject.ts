@@ -9,6 +9,7 @@ export interface AuthContextValue {
   registrar: (payload: RegistrarPayload) => Promise<void>;
   logout: () => void;
   atualizarFamilia: (familia: Familia) => void;
+  atualizarUsuario: (usuario: Usuario) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

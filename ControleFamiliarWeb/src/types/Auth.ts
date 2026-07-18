@@ -49,3 +49,42 @@ export interface ApiEnvelope<T> {
   data?: T;
   message?: string;
 }
+
+export interface AtualizarPerfilPayload {
+  nome?: string;
+  email?: string;
+}
+
+export interface ExportacaoPessoa {
+  id: number;
+  nome: string;
+  idade: number;
+}
+
+export interface ExportacaoCategoria {
+  id: number;
+  descricao: string;
+  finalidade: string;
+}
+
+export interface ExportacaoTransacao {
+  id: number;
+  descricao: string;
+  valor: number;
+  tipo: string;
+  pessoa: string;
+  categoria: string;
+}
+
+export interface ExportacaoDados {
+  usuario: Usuario;
+  familia: {
+    id: number;
+    nome: string;
+    codigoConvite: string;
+    criadoEm: string;
+  };
+  pessoas: ExportacaoPessoa[];
+  categorias: ExportacaoCategoria[];
+  transacoes: ExportacaoTransacao[];
+}
