@@ -22,20 +22,30 @@ export default function Relatorios() {
 
   const [relatorio, setRelatorio] = useState<Relatorio>();
   const [categorias, setCategorias] = useState<CategoriaResumo[]>([]);
-
-  async function carregar() {
-
-    const pessoasResponse = await api.get<Relatorio>("/relatorios/totais-por-pessoa");
-    const categoriasResponse = await api.get<CategoriaResumo[]>("/relatorios/totais-por-categoria");
-
-    setRelatorio(pessoasResponse.data);
-    setCategorias(categoriasResponse.data);
-
-  }
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    carregar();
+    let cancelado = false;
+
+    Promise.all([
+      api.get<Relatorio>("/relatorios/totais-por-pessoa"),
+      api.get<CategoriaResumo[]>("/relatorios/totais-por-categoria")
+    ])
+      .then(([pessoasResponse, categoriasResponse]) => {
+        if (cancelado) return;
+        setRelatorio(pessoasResponse.data);
+        setCategorias(categoriasResponse.data);
+      })
+      .catch(() => {
+        if (!cancelado) setErro("Não foi possível carregar o relatório. Tente novamente.");
+      });
+
+    return () => {
+      cancelado = true;
+    };
   }, []);
+
+  if (erro) return <div className="auth-error">{erro}</div>;
 
   if (!relatorio) return <p>Carregando...</p>;
 

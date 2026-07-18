@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import type { ApiEnvelope, Familia } from "../types/Auth";
 
 function mensagemDeErro(erro: unknown): string {

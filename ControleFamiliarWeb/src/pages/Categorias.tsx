@@ -1,36 +1,40 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../api/api";
 import type { Categoria } from "../types/Categoria";
 import { classeBadge, textoFinalidadeCategoria } from "../utils/badge";
+import { useApiResource } from "../hooks/useApiResource";
 
 export default function Categorias() {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const { dados: categorias, carregando, erro, recarregar } = useApiResource<Categoria>("/categorias");
+
   const [descricao, setDescricao] = useState("");
   const [finalidade, setFinalidade] = useState(1);
   const [mostrarForm, setMostrarForm] = useState(false);
-
-  async function carregar() {
-    const response = await api.get("/categorias");
-    setCategorias(response.data);
-  }
+  const [enviando, setEnviando] = useState(false);
+  const [erroAcao, setErroAcao] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   async function criarCategoria(e: React.FormEvent) {
     e.preventDefault();
 
-    await api.post("/categorias", {
-      descricao,
-      finalidade
-    });
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
 
-    setDescricao("");
-    setFinalidade(1);
-    setMostrarForm(false);
-    carregar();
+    try {
+      await api.post("/categorias", { descricao, finalidade });
+
+      setDescricao("");
+      setFinalidade(1);
+      setMostrarForm(false);
+      setSucesso("Categoria cadastrada com sucesso.");
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível cadastrar a categoria.");
+    } finally {
+      setEnviando(false);
+    }
   }
-
-  useEffect(() => {
-    carregar();
-  }, []);
 
   return (
     <>
@@ -47,6 +51,9 @@ export default function Categorias() {
           {mostrarForm ? "Fechar" : "Nova Categoria"}
         </button>
       </div>
+
+      {erroAcao && <div className="auth-error">{erroAcao}</div>}
+      {sucesso && <div className="auth-success">{sucesso}</div>}
 
       {mostrarForm && (
         <div className="card">
@@ -68,8 +75,8 @@ export default function Categorias() {
               <option value={3}>Ambas</option>
             </select>
 
-            <button className="btn btn-success" type="submit">
-              Salvar
+            <button className="btn btn-success" type="submit" disabled={enviando}>
+              {enviando ? "Salvando..." : "Salvar"}
             </button>
 
             <button
@@ -84,6 +91,8 @@ export default function Categorias() {
       )}
 
       <div className="card">
+        {erro && <div className="auth-error">{erro}</div>}
+
         <div className="table-wrapper">
           <table className="table">
             <thead>
@@ -94,17 +103,27 @@ export default function Categorias() {
               </tr>
             </thead>
             <tbody>
-              {categorias.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.id}</td>
-                  <td>{c.descricao}</td>
-                  <td>
-                    <span className={classeBadge(textoFinalidadeCategoria(c.finalidade))}>
-                      {textoFinalidadeCategoria(c.finalidade)}
-                    </span>
-                  </td>
+              {carregando ? (
+                <tr>
+                  <td colSpan={3}>Carregando...</td>
                 </tr>
-              ))}
+              ) : categorias.length === 0 ? (
+                <tr>
+                  <td colSpan={3}>Nenhuma categoria cadastrada ainda.</td>
+                </tr>
+              ) : (
+                categorias.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.id}</td>
+                    <td>{c.descricao}</td>
+                    <td>
+                      <span className={classeBadge(textoFinalidadeCategoria(c.finalidade))}>
+                        {textoFinalidadeCategoria(c.finalidade)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

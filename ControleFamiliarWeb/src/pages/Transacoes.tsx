@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../api/api";
 
 import type { Transacao } from "../types/Transacao";
@@ -6,11 +6,12 @@ import type { Categoria } from "../types/Categoria";
 import type { Pessoa } from "../types/Pessoa";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency } from "../utils/format";
+import { useApiResource } from "../hooks/useApiResource";
 
 export default function Transacoes() {
-  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const { dados: transacoes, carregando, erro, recarregar } = useApiResource<Transacao>("/transacoes");
+  const { dados: pessoas } = useApiResource<Pessoa>("/pessoas");
+  const { dados: categorias } = useApiResource<Categoria>("/categorias");
 
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState<number>(0);
@@ -18,41 +19,41 @@ export default function Transacoes() {
   const [pessoaId, setPessoaId] = useState<number | "">("");
   const [categoriaId, setCategoriaId] = useState<number | "">("");
   const [mostrarForm, setMostrarForm] = useState(false);
-
-  async function carregar() {
-    const transacoesRes = await api.get("/transacoes");
-    const pessoasRes = await api.get("/pessoas");
-    const categoriasRes = await api.get("/categorias");
-
-    setTransacoes(transacoesRes.data);
-    setPessoas(pessoasRes.data);
-    setCategorias(categoriasRes.data);
-  }
+  const [enviando, setEnviando] = useState(false);
+  const [erroAcao, setErroAcao] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   async function criarTransacao(e: React.FormEvent) {
     e.preventDefault();
 
-    await api.post("/transacoes", {
-      descricao,
-      valor,
-      tipo,
-      pessoaId,
-      categoriaId
-    });
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
 
-    setDescricao("");
-    setValor(0);
-    setTipo(1);
-    setPessoaId("");
-    setCategoriaId("");
-    setMostrarForm(false);
+    try {
+      await api.post("/transacoes", {
+        descricao,
+        valor,
+        tipo,
+        pessoaId,
+        categoriaId
+      });
 
-    carregar();
+      setDescricao("");
+      setValor(0);
+      setTipo(1);
+      setPessoaId("");
+      setCategoriaId("");
+      setMostrarForm(false);
+      setSucesso("Transação cadastrada com sucesso.");
+
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível cadastrar a transação.");
+    } finally {
+      setEnviando(false);
+    }
   }
-
-  useEffect(() => {
-    carregar();
-  }, []);
 
   return (
     <>
@@ -69,6 +70,9 @@ export default function Transacoes() {
           {mostrarForm ? "Fechar" : "Nova Transação"}
         </button>
       </div>
+
+      {erroAcao && <div className="auth-error">{erroAcao}</div>}
+      {sucesso && <div className="auth-success">{sucesso}</div>}
 
       {mostrarForm && (
         <div className="card">
@@ -123,8 +127,8 @@ export default function Transacoes() {
               ))}
             </select>
 
-            <button className="btn btn-success" type="submit">
-              Salvar
+            <button className="btn btn-success" type="submit" disabled={enviando}>
+              {enviando ? "Salvando..." : "Salvar"}
             </button>
 
             <button
@@ -139,6 +143,8 @@ export default function Transacoes() {
       )}
 
       <div className="card">
+        {erro && <div className="auth-error">{erro}</div>}
+
         <div className="table-wrapper">
           <table className="table">
             <thead>
@@ -152,25 +158,34 @@ export default function Transacoes() {
               </tr>
             </thead>
             <tbody>
-              {transacoes.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.id}</td>
-                  <td>{t.descricao}</td>
-                  <td>{formatCurrency(Number(t.valor))}</td>
-                  <td>
-                    <span className={classeBadge(textoTipoTransacao(t.tipo))}>
-                      {textoTipoTransacao(t.tipo)}
-                    </span>
-                  </td>
-                  <td>{t.pessoa}</td>
-                  <td>{t.categoria}</td>
+              {carregando ? (
+                <tr>
+                  <td colSpan={6}>Carregando...</td>
                 </tr>
-              ))}
+              ) : transacoes.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>Nenhuma transação cadastrada ainda.</td>
+                </tr>
+              ) : (
+                transacoes.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.id}</td>
+                    <td>{t.descricao}</td>
+                    <td>{formatCurrency(Number(t.valor))}</td>
+                    <td>
+                      <span className={classeBadge(textoTipoTransacao(t.tipo))}>
+                        {textoTipoTransacao(t.tipo)}
+                      </span>
+                    </td>
+                    <td>{t.pessoa}</td>
+                    <td>{t.categoria}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
     </>
   );
-
 }
