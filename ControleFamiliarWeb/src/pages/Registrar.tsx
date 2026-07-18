@@ -16,6 +16,7 @@ export default function Registrar() {
   const [senha, setSenha] = useState("");
   const [nomeFamilia, setNomeFamilia] = useState("");
   const [codigoConvite, setCodigoConvite] = useState(codigoDaUrl);
+  const [aceitouPrivacidade, setAceitouPrivacidade] = useState(false);
 
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -130,6 +131,19 @@ export default function Registrar() {
               />
             </>
           )}
+
+          <label className="auth-checkbox">
+            <input
+              type="checkbox"
+              checked={aceitouPrivacidade}
+              onChange={(e) => setAceitouPrivacidade(e.target.checked)}
+              required
+            />
+            Li e concordo com a{" "}
+            <Link to="/privacidade" target="_blank" rel="noopener noreferrer">
+              Política de Privacidade
+            </Link>
+          </label>
 
           <button className="btn btn-primary" type="submit" disabled={enviando}>
             {enviando ? "Criando..." : "Criar conta"}
