@@ -21,7 +21,7 @@ export default function Home() {
       {/* ATALHOS */}
       <div className="summary-grid">
 
-        <Link to="/pessoas" className="summary-card">
+        <Link to="/painel/pessoas" className="summary-card">
 
           <div className="summary-label">
             Pessoas
@@ -34,7 +34,7 @@ export default function Home() {
         </Link>
 
 
-        <Link to="/categorias" className="summary-card">
+        <Link to="/painel/categorias" className="summary-card">
 
           <div className="summary-label">
             Categorias
@@ -47,7 +47,7 @@ export default function Home() {
         </Link>
 
 
-        <Link to="/transacoes" className="summary-card">
+        <Link to="/painel/transacoes" className="summary-card">
 
           <div className="summary-label">
             Transações

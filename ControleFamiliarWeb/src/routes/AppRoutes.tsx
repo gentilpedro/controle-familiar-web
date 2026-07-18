@@ -15,6 +15,7 @@ const Registrar = lazy(() => import("../pages/Registrar"));
 const MinhaFamilia = lazy(() => import("../pages/MinhaFamilia"));
 const MeusDados = lazy(() => import("../pages/MeusDados"));
 const Privacidade = lazy(() => import("../pages/Privacidade"));
+const Landing = lazy(() => import("../pages/Landing"));
 
 export default function AppRoutes() {
   return (
@@ -22,6 +23,8 @@ export default function AppRoutes() {
       <AuthProvider>
         <Suspense fallback={<div className="page">Carregando...</div>}>
           <Routes>
+            <Route path="/" element={<Landing />} />
+
             <Route path="/login" element={<Login />} />
 
             <Route path="/registrar" element={<Registrar />} />
@@ -29,7 +32,7 @@ export default function AppRoutes() {
             <Route path="/privacidade" element={<Privacidade />} />
 
             <Route
-              path="/"
+              path="/painel"
               element={
                 <ProtectedRoute>
                   <Layout />

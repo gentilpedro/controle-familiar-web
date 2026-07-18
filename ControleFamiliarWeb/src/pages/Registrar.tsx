@@ -35,7 +35,7 @@ export default function Registrar() {
         nomeFamilia: modoFamilia === "Nova" ? nomeFamilia : undefined,
         codigoConvite: modoFamilia === "Entrar" ? codigoConvite : undefined
       });
-      navigate("/");
+      navigate("/painel");
     } catch {
       setErro("Não foi possível criar a conta. Verifique os dados informados.");
     } finally {

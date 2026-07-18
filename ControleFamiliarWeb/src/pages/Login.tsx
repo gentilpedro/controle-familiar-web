@@ -19,7 +19,7 @@ export default function Login() {
 
     try {
       await login({ email, senha });
-      navigate("/");
+      navigate("/painel");
     } catch {
       setErro("Email ou senha inválidos.");
     } finally {
