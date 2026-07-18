@@ -19,7 +19,7 @@ export default function Modal({ open, title, children, onClose }: Props) {
 
           <h3>{title}</h3>
 
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" aria-label="Fechar" onClick={onClose}>
             ✕
           </button>
 

@@ -36,19 +36,25 @@ export default function Login() {
         {erro && <div className="auth-error">{erro}</div>}
 
         <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="sr-only" htmlFor="login-email">Email</label>
           <input
+            id="login-email"
             className="input"
             type="email"
             placeholder="Email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
+          <label className="sr-only" htmlFor="login-senha">Senha</label>
           <input
+            id="login-senha"
             className="input"
             type="password"
             placeholder="Senha"
+            autoComplete="current-password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required

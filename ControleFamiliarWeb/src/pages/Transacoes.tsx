@@ -77,14 +77,18 @@ export default function Transacoes() {
       {mostrarForm && (
         <div className="card">
           <form onSubmit={criarTransacao} className="form-row">
+            <label className="sr-only" htmlFor="transacao-descricao">Descrição</label>
             <input
+              id="transacao-descricao"
               className="input"
               placeholder="Descrição"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
             />
 
+            <label className="sr-only" htmlFor="transacao-valor">Valor</label>
             <input
+              id="transacao-valor"
               className="input"
               type="number"
               placeholder="Valor"
@@ -92,7 +96,9 @@ export default function Transacoes() {
               onChange={(e) => setValor(Number(e.target.value))}
             />
 
+            <label className="sr-only" htmlFor="transacao-tipo">Tipo</label>
             <select
+              id="transacao-tipo"
               className="select"
               value={tipo}
               onChange={(e) => setTipo(Number(e.target.value))}
@@ -101,7 +107,9 @@ export default function Transacoes() {
               <option value={2}>Despesa</option>
             </select>
 
+            <label className="sr-only" htmlFor="transacao-pessoa">Pessoa</label>
             <select
+              id="transacao-pessoa"
               className="select"
               value={pessoaId}
               onChange={(e) => setPessoaId(Number(e.target.value))}
@@ -114,7 +122,9 @@ export default function Transacoes() {
               ))}
             </select>
 
+            <label className="sr-only" htmlFor="transacao-categoria">Categoria</label>
             <select
+              id="transacao-categoria"
               className="select"
               value={categoriaId}
               onChange={(e) => setCategoriaId(Number(e.target.value))}

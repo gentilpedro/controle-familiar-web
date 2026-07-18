@@ -117,14 +117,18 @@ export default function Pessoas() {
       {mostrarForm && (
         <div className="card">
           <form onSubmit={criarPessoa} className="form-row pessoas">
+            <label className="sr-only" htmlFor="pessoa-nome-form">Nome da pessoa</label>
             <input
+              id="pessoa-nome-form"
               className="input"
               placeholder="Nome da pessoa"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
             />
 
+            <label className="sr-only" htmlFor="pessoa-idade-form">Idade</label>
             <input
+              id="pessoa-idade-form"
               className="input"
               type="number"
               placeholder="Idade"
@@ -205,13 +209,17 @@ export default function Pessoas() {
           onClose={() => setEditModal(false)}
         >
 
+          <label className="sr-only" htmlFor="pessoa-nome-editar">Nome da pessoa</label>
           <input
+            id="pessoa-nome-editar"
             className="input"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
           />
 
+          <label className="sr-only" htmlFor="pessoa-idade-editar">Idade</label>
           <input
+            id="pessoa-idade-editar"
             className="input"
             type="number"
             value={idade}
