@@ -1,86 +1,99 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../api/api";
 import type { Pessoa } from "../types/Pessoa";
 import Modal from "../components/Modal";
+import { useApiResource } from "../hooks/useApiResource";
 
 export default function Pessoas() {
- const [pessoas,setPessoas] = useState<Pessoa[]>([])
+  const { dados: pessoas, carregando, erro, recarregar } = useApiResource<Pessoa>("/pessoas");
 
-  const [editModal,setEditModal] = useState(false)
-  const [deleteModal,setDeleteModal] = useState(false)
+  const [editModal, setEditModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
-  const [pessoaAtual,setPessoaAtual] = useState<Pessoa | null>(null)
+  const [pessoaAtual, setPessoaAtual] = useState<Pessoa | null>(null);
 
-  const [nome,setNome] = useState("")
-  const [idade,setIdade] = useState<number>(0)
+  const [nome, setNome] = useState("");
+  const [idade, setIdade] = useState<number>(0);
 
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erroAcao, setErroAcao] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
-  async function carregar() {
-    const response = await api.get("/pessoas");
-    setPessoas(response.data);
+  function limparMensagens() {
+    setErroAcao("");
+    setSucesso("");
   }
 
   function abrirEditar(pessoa: Pessoa) {
+    limparMensagens();
     setPessoaAtual(pessoa);
     setNome(pessoa.nome);
     setIdade(pessoa.idade);
     setEditModal(true);
   }
-  
-async function salvarEdicao(){
 
-  if(!pessoaAtual) return
+  async function salvarEdicao() {
+    if (!pessoaAtual) return;
 
-  await api.patch(`/pessoas/${pessoaAtual.id}`,{
+    limparMensagens();
+    setEnviando(true);
 
-    nome,
-    idade
+    try {
+      await api.patch(`/pessoas/${pessoaAtual.id}`, { nome, idade });
+      setEditModal(false);
+      setSucesso("Pessoa atualizada com sucesso.");
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível salvar as alterações.");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
-  })
-
-  setEditModal(false)
-
-  carregar()
-
-}
   async function criarPessoa(e: React.FormEvent) {
     e.preventDefault();
 
-    await api.post("/pessoas", {
-      nome,
-      idade
-    });
+    limparMensagens();
+    setEnviando(true);
 
-    setNome("");
-    setIdade(0);
-    setMostrarForm(false);
-    carregar();
+    try {
+      await api.post("/pessoas", { nome, idade });
+      setNome("");
+      setIdade(0);
+      setMostrarForm(false);
+      setSucesso("Pessoa cadastrada com sucesso.");
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível cadastrar a pessoa.");
+    } finally {
+      setEnviando(false);
+    }
   }
 
-   function abrirDelete(p:Pessoa){
-
-    setPessoaAtual(p)
-
-    setDeleteModal(true)
-
+  function abrirDelete(p: Pessoa) {
+    limparMensagens();
+    setPessoaAtual(p);
+    setDeleteModal(true);
   }
 
-  async function confirmarDelete(){
+  async function confirmarDelete() {
+    if (!pessoaAtual) return;
 
-    if(!pessoaAtual) return
+    limparMensagens();
+    setEnviando(true);
 
-    await api.delete(`/pessoas/${pessoaAtual.id}`)
-
-    setDeleteModal(false)
-
-    carregar()
-
+    try {
+      await api.delete(`/pessoas/${pessoaAtual.id}`);
+      setDeleteModal(false);
+      setSucesso("Pessoa removida com sucesso.");
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível remover a pessoa.");
+    } finally {
+      setEnviando(false);
+    }
   }
-
-  useEffect(() => {
-    carregar();
-  }, []);
 
   return (
     <>
@@ -97,6 +110,9 @@ async function salvarEdicao(){
           {mostrarForm ? "Fechar" : "Nova Pessoa"}
         </button>
       </div>
+
+      {erroAcao && <div className="auth-error">{erroAcao}</div>}
+      {sucesso && <div className="auth-success">{sucesso}</div>}
 
       {mostrarForm && (
         <div className="card">
@@ -116,8 +132,8 @@ async function salvarEdicao(){
               onChange={(e) => setIdade(Number(e.target.value))}
             />
 
-            <button className="btn btn-success" type="submit">
-              Salvar
+            <button className="btn btn-success" type="submit" disabled={enviando}>
+              {enviando ? "Salvando..." : "Salvar"}
             </button>
 
             <button
@@ -132,6 +148,8 @@ async function salvarEdicao(){
       )}
 
       <div className="card">
+        {erro && <div className="auth-error">{erro}</div>}
+
         <div className="table-wrapper">
           <table className="table">
             <thead>
@@ -143,86 +161,97 @@ async function salvarEdicao(){
               </tr>
             </thead>
             <tbody>
-              {pessoas.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td>{p.nome}</td>
-                  <td>{p.idade} anos</td>
-                  <td className="table-actions">
-                    <button
-                      className="btn btn-success icon-btn"
-                      onClick={()=>abrirEditar(p)}>
-                      ✏ 
-                    </button> 
-                    
-                    <button
-                      className="btn btn-danger icon-btn"
-                      onClick={()=>abrirDelete(p)}>
-                      🗑
-                    </button>
-                  </td>
+              {carregando ? (
+                <tr>
+                  <td colSpan={4}>Carregando...</td>
                 </tr>
-              ))}
+              ) : pessoas.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>Nenhuma pessoa cadastrada ainda.</td>
+                </tr>
+              ) : (
+                pessoas.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.id}</td>
+                    <td>{p.nome}</td>
+                    <td>{p.idade} anos</td>
+                    <td className="table-actions">
+                      <button
+                        className="btn btn-success icon-btn"
+                        aria-label="Editar pessoa"
+                        onClick={() => abrirEditar(p)}>
+                        ✏
+                      </button>
+
+                      <button
+                        className="btn btn-danger icon-btn"
+                        aria-label="Excluir pessoa"
+                        onClick={() => abrirDelete(p)}>
+                        🗑
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      
-      {/* MODAL EDITAR */}
 
-      <Modal
-        open={editModal}
-        title="Editar Pessoa"
-        onClose={()=>setEditModal(false)}
-      >
+        {/* MODAL EDITAR */}
 
-        <input
-          className="input"
-          value={nome}
-          onChange={(e)=>setNome(e.target.value)}
-        />
-
-        <input
-          className="input"
-          type="number"
-          value={idade}
-          onChange={(e)=>setIdade(Number(e.target.value))}
-        />
-
-        <button
-          className="btn btn-success"
-          onClick={salvarEdicao}
+        <Modal
+          open={editModal}
+          title="Editar Pessoa"
+          onClose={() => setEditModal(false)}
         >
-          Salvar
-        </button>
 
-      </Modal>
+          <input
+            className="input"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
+
+          <input
+            className="input"
+            type="number"
+            value={idade}
+            onChange={(e) => setIdade(Number(e.target.value))}
+          />
+
+          <button
+            className="btn btn-success"
+            onClick={salvarEdicao}
+            disabled={enviando}
+          >
+            {enviando ? "Salvando..." : "Salvar"}
+          </button>
+
+        </Modal>
 
 
-      {/* MODAL DELETE */}
+        {/* MODAL DELETE */}
 
-      <Modal
-        open={deleteModal}
-        title="Confirmar Exclusão"
-        onClose={()=>setDeleteModal(false)}
-      >
-
-        <p>
-
-          Deseja realmente excluir <b>{pessoaAtual?.nome}</b>?
-
-        </p>
-
-        <button
-          className="btn btn-danger"
-          onClick={confirmarDelete}
+        <Modal
+          open={deleteModal}
+          title="Confirmar Exclusão"
+          onClose={() => setDeleteModal(false)}
         >
-          Excluir
-        </button>
 
-      </Modal>
+          <p>
+            Deseja realmente excluir <b>{pessoaAtual?.nome}</b>?
+          </p>
 
-    </div>
+          <button
+            className="btn btn-danger"
+            onClick={confirmarDelete}
+            disabled={enviando}
+          >
+            {enviando ? "Excluindo..." : "Excluir"}
+          </button>
+
+        </Modal>
+
+      </div>
     </>
   );
-
 }
