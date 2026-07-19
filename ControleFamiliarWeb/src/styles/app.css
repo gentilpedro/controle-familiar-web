@@ -149,6 +149,9 @@ a {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 42px;
   border: none;
   border-radius: 10px;

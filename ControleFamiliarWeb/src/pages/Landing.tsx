@@ -39,12 +39,13 @@ export default function Landing() {
           </p>
 
           <div className="landing-hero-actions">
-            <Link to="/registrar" className="btn btn-primary">Começar agora, é grátis →</Link>
+            <Link to="/registrar" className="btn btn-primary">Criar conta →</Link>
             <Link to="/login" className="btn btn-secondary">Já tenho conta</Link>
           </div>
 
           <ul className="landing-checklist">
-            <li>✓ Sem necessidade de cartão de crédito</li>
+            <li>✓ 7 dias grátis para testar no plano Individual</li>
+            <li>✓ Planos a partir de um valor acessível, para uso individual ou em família</li>
             <li>✓ Seus dados protegidos, nunca compartilhados com terceiros</li>
           </ul>
         </div>
@@ -107,8 +108,8 @@ export default function Landing() {
           </p>
 
           <div className="landing-cta-actions">
-            <Link to="/registrar" className="btn landing-cta-button">Criar minha conta gratuita</Link>
-            <span className="landing-cta-note">Grátis, sem cartão de crédito.</span>
+            <Link to="/registrar" className="btn landing-cta-button">Criar minha conta</Link>
+            <span className="landing-cta-note">Planos a partir de um valor acessível — 7 dias grátis no Individual.</span>
           </div>
         </div>
       </section>
