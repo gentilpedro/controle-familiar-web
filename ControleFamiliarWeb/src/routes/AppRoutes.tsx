@@ -14,6 +14,7 @@ const Login = lazy(() => import("../pages/Login"));
 const Registrar = lazy(() => import("../pages/Registrar"));
 const MinhaFamilia = lazy(() => import("../pages/MinhaFamilia"));
 const MeusDados = lazy(() => import("../pages/MeusDados"));
+const Assinatura = lazy(() => import("../pages/Assinatura"));
 const Privacidade = lazy(() => import("../pages/Privacidade"));
 const Landing = lazy(() => import("../pages/Landing"));
 
@@ -46,6 +47,7 @@ export default function AppRoutes() {
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="minha-familia" element={<MinhaFamilia />} />
               <Route path="meus-dados" element={<MeusDados />} />
+              <Route path="assinatura" element={<Assinatura />} />
             </Route>
           </Routes>
         </Suspense>
