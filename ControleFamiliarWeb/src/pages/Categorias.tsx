@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/api";
 import type { Categoria } from "../types/Categoria";
+import Modal from "../components/Modal";
 import { classeBadge, textoFinalidadeCategoria } from "../utils/badge";
 import { useApiResource } from "../hooks/useApiResource";
 
@@ -14,11 +15,59 @@ export default function Categorias() {
   const [erroAcao, setErroAcao] = useState("");
   const [sucesso, setSucesso] = useState("");
 
+  const [editModal, setEditModal] = useState(false);
+  const [categoriaAtual, setCategoriaAtual] = useState<Categoria | null>(null);
+
+  function limparMensagens() {
+    setErroAcao("");
+    setSucesso("");
+  }
+
+  function abrirEditar(categoria: Categoria) {
+    limparMensagens();
+    setCategoriaAtual(categoria);
+    setDescricao(categoria.descricao);
+    setFinalidade(categoria.finalidade);
+    setEditModal(true);
+  }
+
+  function fecharEditar() {
+    setEditModal(false);
+    // O formulario de criacao divide estes dois campos com o modal: sem a
+    // limpeza, "Nova Categoria" abriria preenchido com o que foi editado.
+    setDescricao("");
+    setFinalidade(1);
+  }
+
+  async function salvarEdicao() {
+    if (!categoriaAtual) return;
+
+    // O PATCH ignora campo vazio (atualizacao parcial), entao salvar sem
+    // descricao responderia 200 sem mudar nada — parece que salvou e nao salvou.
+    if (!descricao.trim()) {
+      setErroAcao("Informe a descrição da categoria.");
+      return;
+    }
+
+    limparMensagens();
+    setEnviando(true);
+
+    try {
+      await api.patch(`/categorias/${categoriaAtual.id}`, { descricao, finalidade });
+      fecharEditar();
+      setSucesso("Categoria atualizada com sucesso.");
+      await recarregar();
+    } catch {
+      setErroAcao("Não foi possível salvar as alterações.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   async function criarCategoria(e: React.FormEvent) {
     e.preventDefault();
 
-    setErroAcao("");
-    setSucesso("");
+    limparMensagens();
     setEnviando(true);
 
     try {
@@ -104,16 +153,17 @@ export default function Categorias() {
                 <th>ID</th>
                 <th>Descrição</th>
                 <th>Finalidade</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan={3}>Carregando...</td>
+                  <td colSpan={4}>Carregando...</td>
                 </tr>
               ) : categorias.length === 0 ? (
                 <tr>
-                  <td colSpan={3}>Nenhuma categoria cadastrada ainda.</td>
+                  <td colSpan={4}>Nenhuma categoria cadastrada ainda.</td>
                 </tr>
               ) : (
                 categorias.map((c) => (
@@ -125,12 +175,65 @@ export default function Categorias() {
                         {textoFinalidadeCategoria(c.finalidade)}
                       </span>
                     </td>
+                    <td className="table-actions">
+                      {/* Categoria do sistema e compartilhada por todas as
+                          familias: a API responde 403, entao nem oferece. */}
+                      {!c.ehDoSistema && (
+                        <button
+                          className="btn btn-success icon-btn"
+                          aria-label={`Editar categoria ${c.descricao}`}
+                          onClick={() => abrirEditar(c)}>
+                          ✏
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* MODAL EDITAR */}
+
+        <Modal
+          open={editModal}
+          title="Editar Categoria"
+          onClose={fecharEditar}
+        >
+
+          <label className="sr-only" htmlFor="categoria-descricao-editar">Descrição da categoria</label>
+          <input
+            id="categoria-descricao-editar"
+            className="input"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
+
+          <label className="sr-only" htmlFor="categoria-finalidade-editar">Finalidade</label>
+          <select
+            id="categoria-finalidade-editar"
+            className="select"
+            value={finalidade}
+            onChange={(e) => setFinalidade(Number(e.target.value))}
+          >
+            <option value={1}>Receita</option>
+            <option value={2}>Despesa</option>
+            <option value={3}>Ambas</option>
+          </select>
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
+
+          <button
+            className="btn btn-success"
+            onClick={salvarEdicao}
+            disabled={enviando}
+          >
+            {enviando ? "Salvando..." : "Salvar"}
+          </button>
+
+        </Modal>
+
       </div>
     </>
   );
