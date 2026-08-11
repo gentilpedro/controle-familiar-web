@@ -194,17 +194,23 @@ a {
 
 /*
  * .btn-secondary tem texto em --tinta, que sobre a sidebar escura ficaria
- * invisivel. Aqui ele inverte para a cor do papel.
+ * invisivel. Aqui ele inverte para branco.
+ *
+ * O seletor precisa do .btn junto: `.btn-secondary` esta declarado mais abaixo
+ * neste arquivo e, com a mesma especificidade (uma classe), venceria pela ordem
+ * da cascata — foi isso que apagou o "Sair" contra o fundo escuro. Com duas
+ * classes a inversao ganha independente de onde a regra esteja.
  */
-.sidebar-sair {
+.btn.sidebar-sair {
   width: 100%;
   border-color: rgba(244, 247, 240, 0.28);
-  color: var(--papel);
+  color: #fff;
 }
 
-.sidebar-sair:hover {
+.btn.sidebar-sair:hover {
   background: rgba(244, 247, 240, 0.08);
-  border-color: var(--papel);
+  border-color: #fff;
+  color: #fff;
 }
 
 .sidebar-privacidade {
