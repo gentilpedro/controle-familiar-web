@@ -105,14 +105,46 @@ a {
   border-right: 1px solid var(--pauta);
 }
 
+.sidebar-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
 .sidebar-title {
   font-family: var(--display);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
   padding: 0 10px;
-  margin-bottom: 28px;
   color: #fff;
+}
+
+/*
+ * Só existe no celular — no desktop o menu está sempre aberto e o botao sai.
+ * Nao usa .btn de proposito: .btn-secondary tem texto em --tinta, que sobre a
+ * sidebar escura ficaria invisivel (mesmo motivo da inversao em .sidebar-sair).
+ */
+.sidebar-menu-botao {
+  display: none;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(244, 247, 240, 0.28);
+  border-radius: var(--raio-sm);
+  background: transparent;
+  color: var(--papel);
+  font-family: var(--corpo);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-menu-botao:hover {
+  background: rgba(244, 247, 240, 0.08);
+  border-color: var(--papel);
 }
 
 .sidebar-nav {
@@ -748,6 +780,14 @@ a {
   }
 }
 
+/*
+ * No celular a sidebar deixa de ser coluna e vira barra superior: so a marca e
+ * o botao Menu ficam visiveis, o resto recolhe. A faixa horizontal de links que
+ * havia aqui antes gastava a primeira dobra inteira — sete links quebrando
+ * linha mais nome, familia, Sair e privacidade — antes de qualquer conteudo.
+ *
+ * A barra e sticky para o menu continuar ao alcance depois de rolar a lista.
+ */
 @media (max-width: 768px) {
   .layout {
     flex-direction: column;
@@ -756,31 +796,37 @@ a {
   .sidebar {
     width: 100%;
     height: auto;
-    position: relative;
-    padding: 18px 12px;
+    padding: 12px 16px;
+    z-index: 20;
     border-right: none;
     border-bottom: 1px solid var(--pauta);
   }
 
+  .sidebar-topo {
+    margin-bottom: 0;
+  }
+
   .sidebar-title {
-    margin-bottom: 14px;
+    padding: 0;
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
+  .sidebar-menu-botao {
+    display: inline-flex;
   }
 
-  /* Na horizontal a barra da esquerda nao le como marcador; vira sublinhado */
-  .sidebar-link {
-    border-left: none;
-    border-bottom: 2px solid transparent;
+  .sidebar-recolhivel {
+    display: none;
   }
 
-  .sidebar-link:hover {
-    border-left: none;
-    border-bottom-color: var(--credito);
+  /*
+   * Com a barra grudada no topo, o painel aberto pode passar da tela — dai o
+   * limite de altura com rolagem propria.
+   */
+  .sidebar-recolhivel.aberto {
+    display: block;
+    margin-top: 14px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
   }
 
   .page {
