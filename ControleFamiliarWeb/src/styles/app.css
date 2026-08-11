@@ -767,10 +767,19 @@ a {
 
 /* ---------- Responsivo ---------- */
 
+/*
+ * O formulario de transacao tem cinco campos e dois botoes em sete colunas —
+ * so cabe em tela larga. Antes ele ia direto de sete colunas para uma, entao
+ * um notebook de 1024px ja recebia tudo empilhado. A parada em duas colunas
+ * cobre notebook e tablet; uma coluna fica para o celular, mais abaixo.
+ */
 @media (max-width: 1100px) {
   .form-row,
   .form-row.pessoas,
-  .form-row.categorias,
+  .form-row.categorias {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .summary-grid {
     grid-template-columns: 1fr;
   }
@@ -835,6 +844,32 @@ a {
 
   .page-title {
     font-size: 25px;
+  }
+
+  /*
+   * 16px nao e escolha estetica: o Safari do iPhone da zoom na pagina quando o
+   * campo focado tem fonte menor que isso, e depois nao volta — o usuario fica
+   * com a tela deslocada no meio do cadastro. No desktop segue 15px.
+   */
+  .input,
+  .select {
+    font-size: 16px;
+  }
+
+  /* Alvo de toque: 40px passa do minimo confortavel por pouco, 44 nao */
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Formulario com campo alto demais nao rola dentro do modal sem isto */
+  .modal {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  .auth-card {
+    padding: 24px;
   }
 }
 
@@ -925,6 +960,19 @@ a {
    */
   .table td.table-actions::before {
     margin-right: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .form-row,
+  .form-row.pessoas,
+  .form-row.categorias {
+    grid-template-columns: 1fr;
+  }
+
+  /* Empilhado, o botao de acao do cabecalho ocupa a linha inteira */
+  .page-header > .btn {
+    width: 100%;
   }
 }
 
