@@ -71,6 +71,17 @@ Regras que sustentam o padrão:
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
 
+## Breakpoints
+
+Quatro paradas no `app.css`, nesta ordem: **1100px** (formulário de 7 colunas cai para 2), **768px**
+(sidebar vira barra superior; campos vão a 16px), **720px** (tabela vira ficha) e **560px** (formulário
+em 1 coluna; padding de página e cartão encolhem). A landing tem as suas próprias, em `landing.css`
+(940px e 560px).
+
+Medida que o Recharts precisa (largura de eixo, margem) **não sai do CSS** — vem do
+`useMediaQuery` (`src/hooks/useMediaQuery.ts`), que usa `useSyncExternalStore` sobre o `matchMedia`.
+Para todo o resto, media query no CSS continua sendo o caminho.
+
 ## CSS
 
 `.btn` (`src/styles/app.css`) tem `display: inline-flex; align-items: center; justify-content: center;`
