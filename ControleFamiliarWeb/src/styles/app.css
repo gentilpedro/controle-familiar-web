@@ -519,9 +519,15 @@ a {
 
 /* ---------- Totais ---------- */
 
+/*
+ * auto-fit em vez de tres colunas fixas: os cartoes reencaixam sozinhos e nao
+ * precisam de breakpoint. Antes eles caiam para uma coluna so em 1100px, entao
+ * um notebook de 1024 empilhava Receitas, Despesas e Saldo em tres linhas
+ * quando os tres cabiam lado a lado.
+ */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -774,10 +780,6 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-
   .sidebar {
     width: 220px;
   }
@@ -967,6 +969,28 @@ a {
   /* Empilhado, o botao de acao do cabecalho ocupa a linha inteira */
   .page-header > .btn {
     width: 100%;
+  }
+
+  /*
+   * Numa tela de 360px, 20px de pagina mais 24px de cartao comem 88px — quase
+   * um quarto da largura — antes do conteudo. A folga cede para o dado.
+   */
+  .page {
+    padding: 20px 14px;
+  }
+
+  .card,
+  .chart-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .summary-card {
+    padding: 16px 18px;
+  }
+
+  .summary-value {
+    font-size: 23px;
   }
 }
 

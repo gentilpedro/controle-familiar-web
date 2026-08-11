@@ -3,6 +3,7 @@ import { api } from "../api/api";
 import type { Relatorio } from "../types/Relatorios";
 import type { CategoriaResumo } from "../types/Categoria";
 import { formatCurrency } from "../utils/format";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 import {
   BarChart,
@@ -41,6 +42,14 @@ export default function Relatorios() {
   const [relatorio, setRelatorio] = useState<Relatorio>();
   const [categorias, setCategorias] = useState<CategoriaResumo[]>([]);
   const [erro, setErro] = useState("");
+
+  /*
+   * Num celular de 360px sobram ~300px para o gráfico. Com os 140px de rótulo
+   * de categoria mais os 84px de folga à direita, a barra — que é o dado —
+   * ficava com menos de um terço da largura. Aqui o eixo e as margens encolhem
+   * para a barra voltar a ser a maior parte do desenho.
+   */
+  const telaEstreita = useMediaQuery("(max-width: 720px)");
 
   useEffect(() => {
     let cancelado = false;
@@ -168,7 +177,7 @@ return (
               tick={eixoTick}
               axisLine={false}
               tickLine={false}
-              width={72}
+              width={telaEstreita ? 52 : 72}
               tickFormatter={(v: number) => formatCurrency(v).replace(/\s/g, "")}
             />
             <Tooltip
@@ -224,7 +233,7 @@ return (
         <BarChart
           data={categoriasOrdenadas}
           layout="vertical"
-          margin={{ left: 8, right: 84, top: 4, bottom: 4 }}
+          margin={{ left: 8, right: telaEstreita ? 50 : 84, top: 4, bottom: 4 }}
         >
           <CartesianGrid horizontal={false} stroke={COR_PAUTA} />
           <XAxis
@@ -237,8 +246,8 @@ return (
           <YAxis
             type="category"
             dataKey="categoria"
-            width={140}
-            tick={{ fill: COR_TINTA_SUAVE, fontSize: 14 }}
+            width={telaEstreita ? 110 : 140}
+            tick={{ fill: COR_TINTA_SUAVE, fontSize: telaEstreita ? 11 : 14 }}
             axisLine={false}
             tickLine={false}
           />
@@ -258,7 +267,11 @@ return (
               dataKey="total"
               position="right"
               formatter={(v: number) => formatCurrency(v)}
-              style={{ fill: COR_TINTA_SUAVE, fontSize: 12, fontFamily: FONTE_CIFRA }}
+              style={{
+                fill: COR_TINTA_SUAVE,
+                fontSize: telaEstreita ? 10 : 12,
+                fontFamily: FONTE_CIFRA,
+              }}
             />
           </Bar>
         </BarChart>
