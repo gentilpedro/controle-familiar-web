@@ -118,7 +118,7 @@ export default function MeusDados() {
           </button>
         </form>
 
-        <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 12, marginBottom: 0 }}>
+        <p style={{ color: "var(--tinta-suave)", fontSize: 13, marginTop: 12, marginBottom: 0 }}>
           Alterar o e-mail exige confirmar o novo endereço — você recebe um novo e-mail de confirmação.
         </p>
       </div>

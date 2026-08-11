@@ -25,11 +25,11 @@ export default function Layout() {
           <Link className="sidebar-link" to="/painel/meus-dados">Meus Dados</Link>
         </nav>
 
-        <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-          <div style={{ color: "white", fontWeight: 700, fontSize: 14 }}>{usuario?.nome}</div>
-          <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 14 }}>{familia?.nome}</div>
+        <div className="sidebar-rodape">
+          <div className="sidebar-usuario">{usuario?.nome}</div>
+          <div className="sidebar-familia">{familia?.nome}</div>
 
-          <button className="btn btn-secondary" style={{ width: "100%" }} onClick={handleLogout}>
+          <button className="btn btn-secondary sidebar-sair" onClick={handleLogout}>
             Sair
           </button>
 
@@ -37,7 +37,7 @@ export default function Layout() {
             to="/privacidade"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: "block", marginTop: 14, textAlign: "center", color: "#94a3b8", fontSize: 12 }}
+            className="sidebar-privacidade"
           >
             Política de Privacidade
           </Link>

@@ -5,11 +5,9 @@ import type { CategoriaResumo } from "../types/Categoria";
 import { formatCurrency } from "../utils/format";
 
 import {
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
+  LabelList,
   XAxis,
   YAxis,
   Tooltip,
@@ -17,6 +15,26 @@ import {
   CartesianGrid,
   ResponsiveContainer
 } from "recharts";
+
+/*
+ * Espelham os tokens do app.css. Recharts escreve o valor direto no atributo
+ * SVG, entao aqui vao os hex em vez de var(--credito) — evita depender de como
+ * cada navegador resolve custom property dentro de atributo de apresentacao.
+ */
+const COR_CREDITO = "#1f7a4c";
+const COR_DEBITO = "#b4472f";
+const COR_PAUTA = "#c9d6c4";
+const COR_TINTA_SUAVE = "#4a5c53";
+
+const FONTE_CIFRA =
+  'ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace';
+
+/* Eixos e rotulos usam a mono tabular, como as cifras das tabelas */
+const eixoTick = {
+  fill: COR_TINTA_SUAVE,
+  fontSize: 12,
+  fontFamily: FONTE_CIFRA,
+};
 
 export default function Relatorios() {
 
@@ -49,13 +67,8 @@ export default function Relatorios() {
 
   if (!relatorio) return <p>Carregando...</p>;
 
-  const cores = [
-    "#ff9800",
-    "#2196f3",
-    "#4caf50",
-    "#f44336",
-    "#9c27b0"
-  ];
+  // Maior primeiro: num grafico ranqueado a ordem e a informacao
+  const categoriasOrdenadas = [...categorias].sort((a, b) => b.total - a.total);
 async function baixarExcelPessoa() {
 
   const response = await api.get("/relatorios/excel-pessoa", {
@@ -136,15 +149,56 @@ return (
       </button>
       <div className="chart-card">
         <h2 className="section-title">Receitas vs Despesas por Pessoa</h2>
+        {/*
+          Verde x vermelho e a convencao do razao, mas o par tem separacao
+          fraca em deuteranopia (dE 6.6). Os rotulos de valor sobre cada barra
+          sao a codificacao secundaria que torna as duas series distinguiveis
+          sem depender da cor.
+        */}
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={relatorio.pessoas}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="pessoa" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="totalReceitas" fill="#16a34a" name="Receitas" />
-            <Bar dataKey="totalDespesas" fill="#dc2626" name="Despesas" />
+          <BarChart data={relatorio.pessoas} margin={{ top: 20 }}>
+            <CartesianGrid vertical={false} stroke={COR_PAUTA} />
+            <XAxis
+              dataKey="pessoa"
+              tick={eixoTick}
+              axisLine={{ stroke: COR_PAUTA }}
+              tickLine={false}
+            />
+            <YAxis
+              tick={eixoTick}
+              axisLine={false}
+              tickLine={false}
+              width={72}
+              tickFormatter={(v: number) => formatCurrency(v).replace(/\s/g, "")}
+            />
+            <Tooltip
+              cursor={{ fill: "rgba(15, 31, 24, 0.04)" }}
+              formatter={(v: number) => formatCurrency(v)}
+              contentStyle={{
+                background: "#fcfdfb",
+                border: `1px solid ${COR_PAUTA}`,
+                borderRadius: 8,
+                fontFamily: FONTE_CIFRA,
+                fontSize: 13,
+              }}
+            />
+            <Legend iconType="square" wrapperStyle={{ fontSize: 14, paddingTop: 8 }} />
+            <Bar dataKey="totalReceitas" fill={COR_CREDITO} name="Receitas" radius={[4, 4, 0, 0]}>
+              <LabelList
+                dataKey="totalReceitas"
+                position="top"
+                formatter={(v: number) => formatCurrency(v)}
+                style={{ fill: COR_TINTA_SUAVE, fontSize: 11, fontFamily: FONTE_CIFRA }}
+              />
+            </Bar>
+            <Bar dataKey="totalDespesas" fill={COR_DEBITO} name="Despesas" radius={[4, 4, 0, 0]}>
+              <LabelList
+                dataKey="totalDespesas"
+                position="top"
+                formatter={(v: number) => formatCurrency(v)}
+                style={{ fill: COR_TINTA_SUAVE, fontSize: 11, fontFamily: FONTE_CIFRA }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -158,24 +212,56 @@ return (
       </button>
     <div className="chart-card">
       <h2 className="section-title">Despesas por Categoria</h2>
-      <ResponsiveContainer width="100%" height={320}>
-        <PieChart>
-          <Pie
-            data={categorias}
-            dataKey="total"
-            nameKey="categoria"
-            cx="50%"
-            cy="50%"
-            outerRadius={110}
-            label
-          >
-            {categorias.map((entry, index) => (
-              <Cell key={index} fill={cores[index % cores.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+      {/*
+        Era uma pizza com 5 cores. Cada fatia encosta em todas as outras, e
+        cinco tons distinguiveis entre si nao existem nesta paleta — no teste de
+        todos os pares, roxo x azul dava dE 1.2 em deuteranopia. Barras
+        ranqueadas resolvem na raiz: a categoria e identificada pelo rotulo do
+        eixo, a cor deixa de carregar informacao (uma so, a de despesa) e
+        comparar tamanhos, que e a pergunta real, fica direto.
+      */}
+      <ResponsiveContainer width="100%" height={Math.max(200, categoriasOrdenadas.length * 44 + 40)}>
+        <BarChart
+          data={categoriasOrdenadas}
+          layout="vertical"
+          margin={{ left: 8, right: 84, top: 4, bottom: 4 }}
+        >
+          <CartesianGrid horizontal={false} stroke={COR_PAUTA} />
+          <XAxis
+            type="number"
+            tick={eixoTick}
+            axisLine={{ stroke: COR_PAUTA }}
+            tickLine={false}
+            tickFormatter={(v: number) => formatCurrency(v).replace(/\s/g, "")}
+          />
+          <YAxis
+            type="category"
+            dataKey="categoria"
+            width={140}
+            tick={{ fill: COR_TINTA_SUAVE, fontSize: 14 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            cursor={{ fill: "rgba(15, 31, 24, 0.04)" }}
+            formatter={(v: number) => formatCurrency(v)}
+            contentStyle={{
+              background: "#fcfdfb",
+              border: `1px solid ${COR_PAUTA}`,
+              borderRadius: 8,
+              fontFamily: FONTE_CIFRA,
+              fontSize: 13,
+            }}
+          />
+          <Bar dataKey="total" fill={COR_DEBITO} name="Despesas" barSize={18} radius={[0, 4, 4, 0]}>
+            <LabelList
+              dataKey="total"
+              position="right"
+              formatter={(v: number) => formatCurrency(v)}
+              style={{ fill: COR_TINTA_SUAVE, fontSize: 12, fontFamily: FONTE_CIFRA }}
+            />
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
     </div>
     </div>

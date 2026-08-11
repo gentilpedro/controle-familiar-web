@@ -37,8 +37,27 @@ cifras. O hero mostra um **extrato compartilhado** com lançamentos de exemplo �
 exata das linhas em `LANCAMENTOS`, então mexer numa linha exige conferir o total e o `aria-label`.
 
 Os estilos ficam em `src/styles/landing.css`, importado pelo próprio componente (o Vite separa esse
-CSS junto com a rota). **Os tokens são declarados em `.lp`, não em `:root`** — o painel logado usa a
-paleta azul do `app.css`, e misturar os dois vazaria uma identidade na outra.
+CSS junto com a rota).
+
+## Sistema visual (landing + painel)
+
+Desde 2026-08 a identidade do livro-caixa vale no app inteiro, não só na landing. **Os tokens moram
+no `:root` do `app.css`** — `--papel`, `--superficie`, `--tinta`, `--tinta-suave`, `--credito`,
+`--debito`, `--pauta`, mais `--display`/`--corpo`/`--cifra`. O `landing.css` só mantém aliases
+`--lp-*` apontando para eles, para não reescrever as dezenas de referências: **mudar a paleta se faz
+num lugar só.**
+
+Regras que sustentam o padrão:
+
+- **Toda cifra usa `--cifra` com `font-variant-numeric: tabular-nums` e alinha à direita** (classe
+  `.celula-valor`, com `.credito`/`.debito` para a cor). É isso que põe as casas decimais em coluna e
+  faz a tabela ler como extrato.
+- Títulos em `--display` (Georgia); rótulos e cabeçalhos de tabela em `--cifra` maiúscula espaçada,
+  como sobrancelha de extrato.
+- Separação vem de régua fina (`--pauta`), não de sombra. O saldo leva régua dupla, a convenção de
+  fechamento do livro-caixa.
+- ⚠️ `.btn-secondary` tem texto em `--tinta`; sobre a sidebar escura ele precisa da inversão que está
+  em `.sidebar-sair`. Botão novo dentro da sidebar exige o mesmo cuidado.
 
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.

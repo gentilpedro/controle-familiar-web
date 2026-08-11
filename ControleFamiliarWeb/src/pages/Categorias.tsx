@@ -118,7 +118,7 @@ export default function Categorias() {
               ) : (
                 categorias.map((c) => (
                   <tr key={c.id}>
-                    <td>{c.id}</td>
+                    <td className="celula-id">{c.id}</td>
                     <td>{c.descricao}</td>
                     <td>
                       <span className={classeBadge(textoFinalidadeCategoria(c.finalidade))}>

@@ -161,7 +161,7 @@ export default function Transacoes() {
               <tr>
                 <th>ID</th>
                 <th>Descrição</th>
-                <th>Valor</th>
+                <th className="celula-valor">Valor</th>
                 <th>Tipo</th>
                 <th>Pessoa</th>
                 <th>Categoria</th>
@@ -179,9 +179,20 @@ export default function Transacoes() {
               ) : (
                 transacoes.map((t) => (
                   <tr key={t.id}>
-                    <td>{t.id}</td>
+                    <td className="celula-id">{t.id}</td>
                     <td>{t.descricao}</td>
-                    <td>{formatCurrency(Number(t.valor))}</td>
+                    {/* Cor do valor segue o tipo, como num extrato: receita em
+                        credito, despesa em debito. O badge ao lado mantem a
+                        distincao legivel sem depender da cor. */}
+                    <td
+                      className={
+                        textoTipoTransacao(t.tipo) === "Receita"
+                          ? "celula-valor credito"
+                          : "celula-valor debito"
+                      }
+                    >
+                      {formatCurrency(Number(t.valor))}
+                    </td>
                     <td>
                       <span className={classeBadge(textoTipoTransacao(t.tipo))}>
                         {textoTipoTransacao(t.tipo)}

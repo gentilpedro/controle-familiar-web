@@ -1,18 +1,50 @@
+/*
+ * Sistema visual do FiscalHub — a mesma linguagem da landing, agora no painel.
+ *
+ * A direcao vem do livro-caixa: papel pautado, tinta, o par credito/debito e
+ * reguas finas separando lancamentos. Os tokens moram aqui no :root e a landing
+ * (landing.css) consome estes mesmos valores — uma identidade so, um lugar so
+ * para mexer nela.
+ *
+ * Tres papeis tipograficos:
+ *   --display  Georgia, para titulos. Numerais robustos, cara de contabilidade.
+ *   --corpo    sans do sistema, para texto corrido e controles.
+ *   --cifra    monoespacada, para TODO valor monetario e codigo.
+ *
+ * Fonte do sistema em todos os casos: a CSP do vercel.json tem font-src 'self'
+ * e nao ha arquivo de fonte versionado no repositorio.
+ */
+
 :root {
-  --bg: #f4f7fb;
-  --sidebar: #14213d;
-  --sidebar-hover: #1f335d;
-  --card: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --warning: #f59e0b;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --radius: 16px;
+  /* Superficies — o verde palido do papel contabil pautado */
+  --papel: #f4f7f0;
+  --superficie: #fcfdfb;
+
+  /* Tinta */
+  --tinta: #0f1f18;
+  --tinta-suave: #4a5c53;
+
+  /* O par do razao */
+  --credito: #1f7a4c;
+  --credito-forte: #18613c;
+  --debito: #b4472f;
+  --debito-forte: #97381f;
+
+  /* A pauta do papel: reguas, bordas, divisorias */
+  --pauta: #c9d6c4;
+
+  /* Estado neutro/atencao — ocre, nao o laranja de alerta */
+  --atencao: #8a6d1f;
+
+  --display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --corpo: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cifra: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  --raio: 10px;
+  --raio-sm: 8px;
+
+  /* Sombra discreta: o relevo vem da regua, nao do drop shadow */
+  --sombra: 0 1px 2px rgba(15, 31, 24, 0.04);
 }
 
 * {
@@ -33,14 +65,28 @@
 
 body {
   margin: 0;
-  font-family: Inter, Segoe UI, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--corpo);
+  background: var(--papel);
+  color: var(--tinta);
 }
 
 a {
   text-decoration: none;
 }
+
+/* Foco visivel em tudo que recebe teclado — o outline verde funciona tanto
+   sobre papel quanto sobre a sidebar escura. */
+*:focus-visible {
+  outline: 2px solid var(--credito);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.sidebar *:focus-visible {
+  outline-color: var(--papel);
+}
+
+/* ---------- Estrutura ---------- */
 
 .layout {
   display: flex;
@@ -49,70 +95,155 @@ a {
 
 .sidebar {
   width: 250px;
-  background: linear-gradient(180deg, #14213d 0%, #0f172a 100%);
-  color: white;
-  padding: 28px 20px;
+  /* Tinta solida, sem gradiente: gradiente e o que mais denunciava "template" */
+  background: var(--tinta);
+  color: var(--papel);
+  padding: 28px 16px;
   position: sticky;
   top: 0;
   height: 100vh;
+  border-right: 1px solid var(--pauta);
 }
 
 .sidebar-title {
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 32px;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0 10px;
+  margin-bottom: 28px;
+  color: #fff;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
 }
 
+/* A barra da esquerda faz o papel do marcador de pauta: some quando inativo,
+   acende no hover/foco. Sem pilula colorida. */
 .sidebar-link {
-  color: #dbeafe;
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: 0.2s;
+  color: rgba(244, 247, 240, 0.72);
+  padding: 10px 12px;
+  border-left: 2px solid transparent;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  background: rgba(244, 247, 240, 0.06);
+  border-left-color: var(--credito);
+  color: #fff;
+}
+
+/* ---------- Rodape da sidebar ---------- */
+
+.sidebar-rodape {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(244, 247, 240, 0.16);
+}
+
+.sidebar-usuario {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 0 12px;
+}
+
+.sidebar-familia {
+  color: rgba(244, 247, 240, 0.6);
+  font-size: 12px;
+  margin-bottom: 14px;
+  padding: 0 12px;
+}
+
+/*
+ * .btn-secondary tem texto em --tinta, que sobre a sidebar escura ficaria
+ * invisivel. Aqui ele inverte para a cor do papel.
+ */
+.sidebar-sair {
+  width: 100%;
+  border-color: rgba(244, 247, 240, 0.28);
+  color: var(--papel);
+}
+
+.sidebar-sair:hover {
+  background: rgba(244, 247, 240, 0.08);
+  border-color: var(--papel);
+}
+
+.sidebar-privacidade {
+  display: block;
+  margin-top: 14px;
+  text-align: center;
+  color: rgba(244, 247, 240, 0.6);
+  font-size: 12px;
+}
+
+.sidebar-privacidade:hover {
+  color: var(--papel);
 }
 
 .page {
   flex: 1;
-  padding: 32px;
+  padding: 36px 32px;
+  min-width: 0;
 }
 
 .page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--pauta);
 }
 
 .page-title {
   margin: 0;
-  font-size: 34px;
-  font-weight: 800;
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .page-subtitle {
   margin-top: 6px;
-  color: var(--muted);
+  color: var(--tinta-suave);
   font-size: 15px;
+  line-height: 1.5;
 }
 
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+.section-title {
+  margin: 0 0 16px 0;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card,
+.chart-card {
+  background: var(--superficie);
+  border: 1px solid var(--pauta);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
   padding: 24px;
   margin-bottom: 24px;
 }
+
+.empty-text {
+  color: var(--tinta-suave);
+  padding: 24px 0;
+  font-size: 15px;
+}
+
+/* ---------- Formularios ---------- */
 
 .form-row {
   display: grid;
@@ -121,10 +252,7 @@ a {
   align-items: center;
 }
 
-.form-row.pessoas {
-  grid-template-columns: 2fr 1fr auto auto;
-}
-
+.form-row.pessoas,
 .form-row.categorias {
   grid-template-columns: 2fr 1fr auto auto;
 }
@@ -132,81 +260,101 @@ a {
 .input,
 .select {
   width: 100%;
-  height: 42px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  height: 44px;
+  border: 1px solid var(--pauta);
+  border-radius: var(--raio-sm);
   padding: 0 12px;
-  font-size: 14px;
-  background: white;
+  font-family: var(--corpo);
+  font-size: 15px;
+  color: var(--tinta);
+  background: #fff;
   outline: none;
-  transition: 0.2s;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input:focus,
 .select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  border-color: var(--credito);
+  box-shadow: 0 0 0 3px rgba(31, 122, 76, 0.14);
 }
+
+.input::placeholder {
+  color: var(--tinta-suave);
+  opacity: 0.7;
+}
+
+/* ---------- Botoes ---------- */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
-  border: none;
-  border-radius: 10px;
-  padding: 0 16px;
-  font-weight: 700;
+  gap: 8px;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--raio-sm);
+  padding: 0 18px;
+  font-family: var(--corpo);
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-
+.btn-primary,
 .btn-success {
-  background: var(--success);
-  color: white;
+  background: var(--credito);
+  color: #fff;
 }
 
+.btn-primary:hover,
 .btn-success:hover {
-  filter: brightness(0.95);
+  background: var(--credito-forte);
 }
 
 .btn-secondary {
-  background: #e5e7eb;
-  color: #111827;
+  background: transparent;
+  border-color: var(--pauta);
+  color: var(--tinta);
 }
 
 .btn-secondary:hover {
-  background: #d1d5db;
+  border-color: var(--tinta-suave);
 }
 
 .btn-danger {
-  background: var(--danger);
-  color: white;
+  background: var(--debito);
+  color: #fff;
 }
 
 .btn-danger:hover {
-  filter: brightness(0.95);
+  background: var(--debito-forte);
 }
+
+/* Exportar planilha e acao secundaria: nao compete com o botao principal */
 .btn-excel {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  background: transparent;
+  border-color: var(--pauta);
+  color: var(--tinta);
 }
-.icon-btn{
-  width:40px;
-  height:40px;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+
+.btn-excel:hover {
+  border-color: var(--tinta-suave);
+  background: transparent;
 }
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--raio-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Tabelas: onde a linguagem do razao mais rende ---------- */
 
 .table-wrapper {
   overflow-x: auto;
@@ -215,192 +363,263 @@ a {
 .table {
   width: 100%;
   border-collapse: collapse;
-  overflow: hidden;
-  border-radius: 12px;
 }
 
+/* Cabecalho como sobrancelha de extrato: mono, caixa alta, discreto */
 .table thead th {
-  background: #f8fafc;
-  color: #111827;
-  font-size: 14px;
+  background: transparent;
+  color: var(--tinta-suave);
+  font-family: var(--cifra);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   text-align: left;
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--tinta);
+  white-space: nowrap;
 }
 
 .table tbody td {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--pauta);
+  font-size: 15px;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .table tbody tr:hover {
-  background: #f9fbff;
+  background: rgba(31, 122, 76, 0.04);
 }
 
-.table-actions{
-  display:flex;
-  gap:10px;
+/*
+ * Toda cifra usa a mono com tabular-nums e alinha a direita: e o que poe as
+ * casas decimais em coluna e faz a tabela ler como extrato em vez de lista.
+ * Aplicado na celula E no cabecalho dela, senao o titulo desalinha do numero.
+ */
+.celula-valor,
+.table thead th.celula-valor {
+  font-family: var(--cifra);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
+.table tbody td.celula-valor {
+  font-weight: 600;
+}
+
+.celula-valor.credito {
+  color: var(--credito);
+}
+
+.celula-valor.debito {
+  color: var(--debito);
+}
+
+/* Coluna de id: discreta, mono, nao compete com o conteudo */
+.celula-id {
+  font-family: var(--cifra);
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-suave);
+  font-size: 13px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Etiquetas ---------- */
+
+/* Tinta sobre fundo lavado com borda, em vez de pilula saturada */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 3px 9px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-family: var(--cifra);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .badge-receita {
-  background: rgba(22, 163, 74, 0.12);
-  color: var(--success);
+  background: rgba(31, 122, 76, 0.08);
+  border-color: rgba(31, 122, 76, 0.3);
+  color: var(--credito);
 }
 
 .badge-despesa {
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--danger);
+  background: rgba(180, 71, 47, 0.08);
+  border-color: rgba(180, 71, 47, 0.3);
+  color: var(--debito);
 }
 
 .badge-ambas {
-  background: rgba(245, 158, 11, 0.15);
-  color: #b45309;
+  background: rgba(138, 109, 31, 0.08);
+  border-color: rgba(138, 109, 31, 0.3);
+  color: var(--atencao);
 }
+
+/* ---------- Totais ---------- */
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .summary-card {
-  background: white;
-  border-radius: 16px;
-  padding: 22px;
-  box-shadow: var(--shadow);
+  background: var(--superficie);
+  border: 1px solid var(--pauta);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 20px 22px;
 }
 
 .summary-label {
-  color: var(--muted);
-  font-size: 14px;
-  margin-bottom: 10px;
+  font-family: var(--cifra);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  margin-bottom: 12px;
 }
 
 .summary-value {
-  font-size: 30px;
-  font-weight: 800;
+  font-family: var(--cifra);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .summary-value.receita {
-  color: var(--success);
+  color: var(--credito);
 }
 
 .summary-value.despesa {
-  color: var(--danger);
+  color: var(--debito);
+}
+
+/*
+ * O saldo e o fechamento da conta: leva a regua dupla do livro-caixa acima do
+ * numero, a mesma convencao usada no extrato da landing.
+ */
+.summary-card:has(.summary-value.saldo) .summary-label {
+  padding-bottom: 12px;
+  border-bottom: 2px double var(--tinta);
+  margin-bottom: 12px;
 }
 
 .summary-value.saldo {
-  color: var(--primary);
+  color: var(--tinta);
 }
 
-.chart-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: var(--shadow);
-  margin-bottom: 24px;
-}
+/* ---------- Modal ---------- */
 
-.section-title {
-  margin: 0 0 16px 0;
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.empty-text {
-  color: var(--muted);
-  padding: 24px 0;
-}
-
-.modal-overlay{
+.modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+  background: rgba(15, 31, 24, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 999;
 }
 
-.modal{
-  width:420px;
-  background:white;
-  border-radius:12px;
-  padding:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--superficie);
+  border: 1px solid var(--pauta);
+  border-radius: var(--raio);
+  padding: 24px;
+  box-shadow: 0 20px 44px -24px rgba(15, 31, 24, 0.5);
 }
 
-.modal-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--pauta);
 }
 
-.modal-body{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+.modal-header h2,
+.modal-header h3 {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
 }
 
-.modal-close{
-  background:none;
-  border:none;
-  font-size:18px;
-  cursor:pointer;
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-@media (max-width: 1100px) {
-  .form-row,
-  .form-row.pessoas,
-  .form-row.categorias,
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    width: 220px;
-  }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--tinta-suave);
+  cursor: pointer;
+  padding: 4px;
 }
+
+.modal-close:hover {
+  color: var(--tinta);
+}
+
+/* ---------- Login / cadastro ---------- */
+
 .auth-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: var(--papel);
   padding: 24px;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 420px;
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  max-width: 430px;
+  background: var(--superficie);
+  border: 1px solid var(--pauta);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
   padding: 32px;
 }
 
 .auth-title {
   margin: 0 0 6px 0;
-  font-size: 26px;
-  font-weight: 800;
+  font-family: var(--display);
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .auth-subtitle {
   margin: 0 0 24px 0;
-  color: var(--muted);
-  font-size: 14px;
+  color: var(--tinta-suave);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .auth-form {
@@ -423,61 +642,87 @@ a {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.4;
+  font-size: 14px;
+  color: var(--tinta-suave);
+  line-height: 1.5;
 }
 
 .auth-checkbox input {
-  margin-top: 2px;
+  margin-top: 3px;
   flex-shrink: 0;
+  accent-color: var(--credito);
 }
 
 .auth-checkbox a {
-  color: var(--primary);
+  color: var(--credito);
   font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Mensagens: barra lateral na cor do estado, em vez de bloco tingido inteiro */
+.auth-error,
+.auth-success {
+  border-radius: var(--raio-sm);
+  border-left: 3px solid;
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
 }
 
 .auth-error {
-  background: rgba(220, 38, 38, 0.1);
-  color: var(--danger);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  background: rgba(180, 71, 47, 0.07);
+  border-left-color: var(--debito);
+  color: var(--debito-forte);
 }
 
 .auth-success {
-  background: rgba(22, 163, 74, 0.1);
-  color: var(--success);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  background: rgba(31, 122, 76, 0.07);
+  border-left-color: var(--credito);
+  color: var(--credito-forte);
 }
 
 .auth-footer {
-  margin-top: 20px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--pauta);
   text-align: center;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--tinta-suave);
 }
 
 .auth-footer a {
-  color: var(--primary);
-  font-weight: 700;
+  color: var(--credito);
+  font-weight: 600;
 }
 
+/* Codigo de convite: ja era mono, agora usa o token e a pauta do sistema */
 .invite-code {
   display: inline-block;
-  font-family: "Courier New", monospace;
+  font-family: var(--cifra);
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  background: #f1f5f9;
-  border: 1px dashed var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 1px dashed var(--pauta);
+  border-radius: var(--raio-sm);
+  padding: 11px 16px;
+}
+
+/* ---------- Responsivo ---------- */
+
+@media (max-width: 1100px) {
+  .form-row,
+  .form-row.pessoas,
+  .form-row.categorias,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    width: 220px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -489,13 +734,46 @@ a {
     width: 100%;
     height: auto;
     position: relative;
+    padding: 18px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--pauta);
+  }
+
+  .sidebar-title {
+    margin-bottom: 14px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Na horizontal a barra da esquerda nao le como marcador; vira sublinhado */
+  .sidebar-link {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+  }
+
+  .sidebar-link:hover {
+    border-left: none;
+    border-bottom-color: var(--credito);
   }
 
   .page {
-    padding: 20px;
+    padding: 24px 20px;
   }
 
   .page-title {
-    font-size: 28px;
+    font-size: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .input,
+  .select,
+  .sidebar-link {
+    transition: none;
   }
 }
