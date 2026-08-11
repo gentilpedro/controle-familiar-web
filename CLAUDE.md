@@ -62,6 +62,10 @@ Regras que sustentam o padrão:
   `data-rotulo` (`content: attr(data-rotulo)`). Então **todo `<td>` de dado precisa de `data-rotulo`**
   — sem ele o valor aparece sem legenda no celular. Vale para as quatro tabelas: Categorias,
   Pessoas, Transações e Minha Família.
+- **Abaixo de 768px a sidebar vira barra superior grudada no topo**: só a marca e o botão `Menu`
+  ficam visíveis, e o resto (`nav` + rodapé) recolhe dentro de `.sidebar-recolhivel`, controlado pelo
+  estado `menuAberto` do `Layout`. No desktop o CSS mostra tudo, então o estado não tem efeito lá —
+  item novo no menu entra no `nav` normalmente e já vem recolhido no celular.
 - ⚠️ Nunca ponha `display: flex` numa `<td>`: isso tira a célula do algoritmo de tabela, a linha
   deixa de alinhar com as demais e a régua inferior quebra no meio da grade (foi exatamente o bug da
   coluna de ações). Para espaçar botões dentro da célula, use margem — eles já são `inline-flex`.
