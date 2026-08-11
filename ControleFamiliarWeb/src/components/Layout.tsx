@@ -5,8 +5,10 @@ export default function Layout() {
   const { usuario, familia, logout } = useAuth();
   const navigate = useNavigate();
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    // Espera a API apagar o cookie antes de navegar: sair da tela primeiro
+    // deixaria a sessão viva no servidor até o token expirar.
+    await logout();
     navigate("/login");
   }
 
