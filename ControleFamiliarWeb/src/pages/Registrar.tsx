@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { mensagemDeErro } from "../utils/erro";
 
 export default function Registrar() {
   const { registrar } = useAuth();
@@ -36,8 +37,10 @@ export default function Registrar() {
         codigoConvite: modoFamilia === "Entrar" ? codigoConvite : undefined
       });
       navigate("/painel");
-    } catch {
-      setErro("Não foi possível criar a conta. Verifique os dados informados.");
+    } catch (erro) {
+      // A API já explica o motivo real: e-mail em uso, senha fora da política,
+      // código de convite inválido. A mensagem fixa apagava tudo isso.
+      setErro(mensagemDeErro(erro));
     } finally {
       setEnviando(false);
     }
@@ -94,16 +97,16 @@ export default function Registrar() {
             required
           />
 
-          <label className="sr-only" htmlFor="registrar-senha">Senha (mínimo 6 caracteres)</label>
+          <label className="sr-only" htmlFor="registrar-senha">Senha (mínimo 8 caracteres)</label>
           <input
             id="registrar-senha"
             className="input"
             type="password"
-            placeholder="Senha (mínimo 6 caracteres)"
+            placeholder="Senha (mínimo 8 caracteres)"
             autoComplete="new-password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            minLength={6}
+            minLength={8}
             required
           />
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { mensagemDeErro } from "../utils/erro";
 
 export default function Login() {
   const { login } = useAuth();
@@ -20,8 +21,12 @@ export default function Login() {
     try {
       await login({ email, senha });
       navigate("/painel");
-    } catch {
-      setErro("Email ou senha inválidos.");
+    } catch (erro) {
+      // A API distingue "credencial errada" de "conta bloqueada por excesso de
+      // tentativas" e de "muitas requisições" (429). Engolir tudo num
+      // "Email ou senha inválidos" fixo fazia quem estava só bloqueado achar
+      // que errou a senha — e continuar tentando, o que renovava o bloqueio.
+      setErro(mensagemDeErro(erro));
     } finally {
       setEnviando(false);
     }
