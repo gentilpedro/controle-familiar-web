@@ -72,7 +72,7 @@ export default function MeusDados() {
 
     try {
       await api.delete("/auth/me");
-      logout();
+      await logout();
       navigate("/login");
     } catch (erro) {
       setErro(mensagemDeErro(erro));

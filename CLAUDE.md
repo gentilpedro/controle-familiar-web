@@ -79,6 +79,34 @@ Deploy pela integração nativa de Git da Vercel (push na `main` → produção;
 a próxima versão (`vN.N.N`, patch incrementado). Não anexa o bundle — o `dist/` do CI sai sem
 `VITE_API_URL` de produção e apontaria para localhost.
 
-⚠️ A CSP em `ControleFamiliarWeb/vercel.json` tem `connect-src 'self' https://fiscalhub.runasp.net`
-**hardcoded**. Se a URL da API mudar, ela precisa ser atualizada lá também, senão o navegador bloqueia
-todas as chamadas mesmo com `VITE_API_URL` correta.
+## Sessão em cookie HttpOnly e o proxy (desde 2026-08)
+
+O token saiu do `localStorage` para um **cookie HttpOnly** — invisível ao JavaScript, então um XSS não
+sequestra mais a sessão. Isso obrigou uma mudança de arquitetura:
+
+**O navegador nunca fala com `fiscalhub.runasp.net` diretamente.** O `vercel.json` reescreve
+`/api/*` para a API, e o `vite.config.ts` faz o mesmo em desenvolvimento. Nos dois casos tudo é
+same-origin, e o cookie é **first-party**.
+
+⚠️ Isso não é otimização, é requisito: os domínios são diferentes (`*.vercel.app` × `*.runasp.net`),
+então sem o proxy o cookie seria de terceiro — **Safari e Firefox bloqueiam por padrão** e o login
+simplesmente não funcionaria neles.
+
+Consequências práticas:
+
+- **`VITE_API_URL` não existe mais.** A URL da API vive no rewrite do `vercel.json`; mudá-la não
+  exige rebuild do frontend. Em dev, `API_PROXY_TARGET` (sem prefixo `VITE_`) ajusta o alvo do proxy.
+- **A ordem dos rewrites importa.** O de `/api/*` precisa vir **antes** do fallback `/(.*)` →
+  `/index.html`, senão a SPA engole as chamadas de API.
+- **Toda escrita manda o header `X-Requisicao-FiscalHub`** (configurado no `api.ts`). A API rejeita
+  com 403 requisições de escrita autenticadas por cookie sem ele — é a proteção CSRF, que o header
+  `Authorization` não precisava. Ver `CsrfMiddleware` no repositório da API.
+- **`logout` virou assíncrono**: só a API apaga um cookie HttpOnly, e o endpoint também revoga o
+  token no servidor.
+- **O `AuthContext` sempre chama `/auth/me` no start.** Com cookie HttpOnly não há como o JavaScript
+  saber de antemão se existe sessão. O 401 dessa chamada é o caso normal de visitante, então
+  `/auth/me` e `/auth/login` estão fora do redirecionamento automático do interceptor — sem essa
+  exceção, quem abrisse a landing seria jogado no `/login`.
+
+A CSP ficou `connect-src 'self'`: como não há mais chamada cross-origin, não é preciso listar o host
+da API.
