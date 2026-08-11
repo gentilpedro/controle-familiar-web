@@ -112,7 +112,7 @@ export default function MinhaFamilia() {
               <tr>
                 <th>Nome</th>
                 <th>Papel</th>
-                {souAdministrador && <th>Ações</th>}
+                {souAdministrador && <th className="table-actions">Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -121,11 +121,11 @@ export default function MinhaFamilia() {
 
                 return (
                   <tr key={membro.id}>
-                    <td>
+                    <td data-rotulo="Nome">
                       {membro.nome}
                       {souEu && " (você)"}
                     </td>
-                    <td>
+                    <td data-rotulo="Papel">
                       {membro.ehAdministrador ? (
                         <span className="badge badge-ambas">Admin</span>
                       ) : (
@@ -133,7 +133,7 @@ export default function MinhaFamilia() {
                       )}
                     </td>
                     {souAdministrador && (
-                      <td className="table-actions">
+                      <td className="table-actions" data-rotulo="Ações">
                         {membro.ehAdministrador ? (
                           <button
                             className="btn btn-secondary"

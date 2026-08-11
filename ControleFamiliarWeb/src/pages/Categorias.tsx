@@ -101,7 +101,7 @@ export default function Categorias() {
           <table className="table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="celula-id">ID</th>
                 <th>Descrição</th>
                 <th>Finalidade</th>
               </tr>
@@ -118,9 +118,9 @@ export default function Categorias() {
               ) : (
                 categorias.map((c) => (
                   <tr key={c.id}>
-                    <td className="celula-id">{c.id}</td>
-                    <td>{c.descricao}</td>
-                    <td>
+                    <td className="celula-id" data-rotulo="ID">{c.id}</td>
+                    <td data-rotulo="Descrição">{c.descricao}</td>
+                    <td data-rotulo="Finalidade">
                       <span className={classeBadge(textoFinalidadeCategoria(c.finalidade))}>
                         {textoFinalidadeCategoria(c.finalidade)}
                       </span>

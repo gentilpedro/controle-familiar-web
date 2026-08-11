@@ -58,6 +58,13 @@ Regras que sustentam o padrão:
   fechamento do livro-caixa.
 - ⚠️ `.btn-secondary` tem texto em `--tinta`; sobre a sidebar escura ele precisa da inversão que está
   em `.sidebar-sair`. Botão novo dentro da sidebar exige o mesmo cuidado.
+- ⚠️ **Abaixo de 720px a `.table` vira ficha empilhada** e o cabeçalho de cada célula vem do atributo
+  `data-rotulo` (`content: attr(data-rotulo)`). Então **todo `<td>` de dado precisa de `data-rotulo`**
+  — sem ele o valor aparece sem legenda no celular. Vale para as quatro tabelas: Categorias,
+  Pessoas, Transações e Minha Família.
+- ⚠️ Nunca ponha `display: flex` numa `<td>`: isso tira a célula do algoritmo de tabela, a linha
+  deixa de alinhar com as demais e a régua inferior quebra no meio da grade (foi exatamente o bug da
+  coluna de ações). Para espaçar botões dentro da célula, use margem — eles já são `inline-flex`.
 
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
