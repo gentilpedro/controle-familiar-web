@@ -112,9 +112,9 @@ export default function Landing() {
             <Link to="/login" className="lp-botao lp-botao-vazado">Já tenho conta</Link>
           </div>
 
-          <p className="lp-nota-teste">
-            7 dias grátis no plano Individual. O cartão é pedido no cadastro e a
-            cobrança começa só depois do teste.
+          <p className="lp-nota-hero">
+            Grátis para usar. Crie a conta, convide quem mora com você e comece a
+            lançar — sem cartão de crédito.
           </p>
         </div>
 
@@ -218,8 +218,7 @@ export default function Landing() {
           </Link>
 
           <p className="lp-chamada-nota">
-            Plano Individual para uso próprio, plano Família para compartilhar com até
-            5 pessoas.
+            Use sozinho ou compartilhe com a família — sem custo.
           </p>
         </div>
       </section>

@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "../components/Layout";
 import { AuthProvider } from "../context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
-import RequireAssinatura from "./RequireAssinatura";
 
 const Home = lazy(() => import("../pages/Home"));
 const Pessoas = lazy(() => import("../pages/Pessoas"));
@@ -15,7 +14,6 @@ const Login = lazy(() => import("../pages/Login"));
 const Registrar = lazy(() => import("../pages/Registrar"));
 const MinhaFamilia = lazy(() => import("../pages/MinhaFamilia"));
 const MeusDados = lazy(() => import("../pages/MeusDados"));
-const Assinatura = lazy(() => import("../pages/Assinatura"));
 const Privacidade = lazy(() => import("../pages/Privacidade"));
 const Landing = lazy(() => import("../pages/Landing"));
 
@@ -42,17 +40,12 @@ export default function AppRoutes() {
               }
             >
               <Route index element={<Home />} />
-
-              <Route element={<RequireAssinatura />}>
-                <Route path="pessoas" element={<Pessoas />} />
-                <Route path="categorias" element={<Categorias />} />
-                <Route path="transacoes" element={<Transacoes />} />
-                <Route path="relatorios" element={<Relatorios />} />
-              </Route>
-
+              <Route path="pessoas" element={<Pessoas />} />
+              <Route path="categorias" element={<Categorias />} />
+              <Route path="transacoes" element={<Transacoes />} />
+              <Route path="relatorios" element={<Relatorios />} />
               <Route path="minha-familia" element={<MinhaFamilia />} />
               <Route path="meus-dados" element={<MeusDados />} />
-              <Route path="assinatura" element={<Assinatura />} />
             </Route>
           </Routes>
         </Suspense>

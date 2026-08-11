@@ -1,55 +1,65 @@
 # ControleFamiliarWeb (FiscalHub) — notas para o Claude
 
-Frontend React 19 + TypeScript + Vite + React Router v7 do FiscalHub (`fiscalhub.runasp.net`). Consome
-a API do repositório irmão `controle-familiar-api` (repositório separado, não é monorepo).
+Frontend React 19 + TypeScript + Vite + React Router v7 do FiscalHub. Consome a API do repositório
+irmão `controle-familiar-api` (repositório separado, não é monorepo).
 
 ## Padrão de trabalho ("bloco")
 
 Uma mudança de escopo focado = uma branch = um PR = um merge. Sempre verificar com
-`npm run build && npm run lint` (e `npx tsc --noEmit`, já que `npm run build` roda só `vite build` e não
-faz checagem de tipo completa por si só) antes do merge.
+`npm run build && npm run lint` **e `npx tsc --noEmit`** — `npm run build` roda só `vite build`, que
+transpila sem checar tipos, então sozinho ele deixa passar erro de tipagem.
 
-## Assinatura paga via Stripe (implementada em 2026-07)
+## Acesso: uso livre
 
-O app deixou de ser gratuito: rotas financeiras exigem assinatura ativa (ver
-`controle-familiar-api/CLAUDE.md` pro lado do backend — planos, trial, paywall 402, teto de 5 membros
-por família).
+O app **não tem cobrança**. Toda conta autenticada acessa as rotas financeiras; o único controle é o
+`ProtectedRoute` (sessão válida). Não existe gate de assinatura, página de planos nem trial.
 
-### Arquitetura (neste frontend)
+## Assinatura via Stripe — revertida em 2026-08-11
 
-- `src/types/Assinatura.ts` — `AssinaturaStatus`, `TipoPlano` (`1 | 2`, Individual/Família),
-  `CheckoutResponse`, `PortalResponse`.
-- `src/pages/Assinatura.tsx` (rota `/painel/assinatura`) — busca `GET /assinatura/status`; sem acesso,
-  mostra os dois planos com botão "Assinar"/"Começar teste grátis" (`POST /assinatura/checkout` →
-  redirect via `window.location.href` pra URL do Stripe Checkout); com acesso, mostra status atual +
-  "Gerenciar assinatura" (`POST /assinatura/portal` → redirect pro Customer Portal). **Não mostra preço
-  fixo de propósito** — o valor só existe no Dashboard do Stripe, a página nunca deveria hardcodar um
-  número que pode mudar sem deploy.
-- `src/routes/RequireAssinatura.tsx` (modelado no `ProtectedRoute.tsx` existente) — consulta
-  `/assinatura/status` e redireciona pra `/painel/assinatura` se `temAcesso` for `false` (falha na
-  checagem também conta como sem acesso). Envolve só `pessoas`/`categorias`/`transacoes`/`relatorios`
-  via uma rota pathless em `AppRoutes.tsx` — `minha-familia`, `meus-dados` e a própria `assinatura`
-  ficam fora do gate.
-- Link "Assinatura" na sidebar (`Layout.tsx`).
+A cobrança chegou a ser implementada (PRs #18, #19, #21) e foi revertida junto com o lado da API.
+O código está preservado na branch **`backup/assinatura-stripe`** — lá ficam `pages/Assinatura.tsx`,
+`routes/RequireAssinatura.tsx` e `types/Assinatura.ts`.
 
-### Landing page (`src/pages/Landing.tsx`)
+Vale registrar o motivo, porque afeta como reintroduzir isso: o `RequireAssinatura` tratava **qualquer
+falha** da chamada a `/assinatura/status` como "sem acesso" e redirecionava para a página de
+assinatura. Com o endpoint removido da API, isso trancaria todo mundo fora do painel — o front tinha
+que ser revertido no mesmo movimento que o backend, não depois.
 
-Rota pública `/`, antes do login. Copy ajustada em 2026-07 pra refletir que o app é pago: **nunca
-afirma "grátis"/"sem cartão de crédito" sem qualificar** — o trial de 7 dias existe só no plano
-Individual e mesmo assim o Stripe Checkout pede cartão (cobrança só começa depois do trial, mas o
-cartão é coletado na hora). Preço também não é hardcodado aqui pelo mesmo motivo do `Assinatura.tsx`
-(valores ainda em modo teste no Stripe quando isso foi escrito).
+Se a cobrança voltar: um gate que trata erro de rede como "não pagou" transforma instabilidade da API
+em bloqueio total do produto. Vale distinguir "a API respondeu que não tem acesso" de "não consegui
+perguntar".
 
-### CSS
+## Landing page (`src/pages/Landing.tsx`)
+
+Rota pública `/`, antes do login. Redesenhada em 2026-08 com identidade derivada do livro-caixa:
+paleta de papel-razão, Georgia no display e monoespaçada com `font-variant-numeric: tabular-nums` nas
+cifras. O hero mostra um **extrato compartilhado** com lançamentos de exemplo — o `SALDO` é a soma
+exata das linhas em `LANCAMENTOS`, então mexer numa linha exige conferir o total e o `aria-label`.
+
+Os estilos ficam em `src/styles/landing.css`, importado pelo próprio componente (o Vite separa esse
+CSS junto com a rota). **Os tokens são declarados em `.lp`, não em `:root`** — o painel logado usa a
+paleta azul do `app.css`, e misturar os dois vazaria uma identidade na outra.
+
+A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
+verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
+
+## CSS
 
 `.btn` (`src/styles/app.css`) tem `display: inline-flex; align-items: center; justify-content: center;`
 — sem isso, botões renderizados como `<Link>` (que vira `<a>`, `display: inline` por padrão) não
-centralizam o texto verticalmente dentro da altura fixa de 42px. `<button class="btn">` disfarça o bug
-(estilo padrão do navegador já centraliza), mas qualquer `<Link className="btn ...">` novo depende
-dessa regra.
+centralizam o texto verticalmente dentro da altura fixa. `<button class="btn">` disfarça o bug, mas
+qualquer `<Link className="btn ...">` novo depende dessa regra. A landing repete o cuidado no
+`.lp-botao`.
 
-## Pendências de go-live do Stripe
+## Deploy e release
 
-Três passos manuais no Dashboard do Stripe/GitHub (não é código deste repo) — ver `CLAUDE.md` do
-`controle-familiar-api` e a memória "Stripe go-live checklist": criar Products/Prices em modo live,
-configurar o webhook endpoint de produção, habilitar o Customer Portal.
+Deploy pela integração nativa de Git da Vercel (push na `main` → produção; PR → preview), com
+**Root Directory = `ControleFamiliarWeb`**. Não há workflow de deploy no repositório.
+
+`.github/workflows/release.yml` roda em push na `main`: checa tipos, lint e build e cria a Release com
+a próxima versão (`vN.N.N`, patch incrementado). Não anexa o bundle — o `dist/` do CI sai sem
+`VITE_API_URL` de produção e apontaria para localhost.
+
+⚠️ A CSP em `ControleFamiliarWeb/vercel.json` tem `connect-src 'self' https://fiscalhub.runasp.net`
+**hardcoded**. Se a URL da API mudar, ela precisa ser atualizada lá também, senão o navegador bloqueia
+todas as chamadas mesmo com `VITE_API_URL` correta.
