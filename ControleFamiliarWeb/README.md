@@ -109,6 +109,10 @@ git tag v1.1.0 && git push origin v1.1.0
 
 As notas são geradas a partir dos títulos dos PRs mergeados desde a release anterior — títulos descritivos viram o changelog.
 
+Elas são agrupadas em categorias conforme o `.github/release.yml`: **🚀 Novidades** (`enhancement`), **🐛 Correções** (`bug`), **📖 Documentação** (`documentation`) e **📦 Outras mudanças**.
+
+⚠️ O agrupamento usa a **label do Pull Request**, não o título nem o commit. Um PR sem label cai em "Outras mudanças" — é para isso que serve a categoria coringa `"*"` no fim do arquivo; sem ela, PRs sem label seriam *omitidos* das notas. Para que o changelog saia realmente organizado, é preciso rotular os PRs ao abri-los.
+
 Nenhum bundle é anexado à release: o `dist/` gerado no CI não tem as variáveis de ambiente de produção (apontaria para `localhost`), e o bundle que realmente vai ao ar é o que a Vercel constrói. O build no CI serve como verificação, não como artefato distribuível.
 
 Como esse workflow não faz o deploy, uma release falhar **não** impede a Vercel de publicar — as duas coisas reagem ao mesmo push de forma independente. Para reverter um deploy, use *Instant Rollback* na aba **Deployments** da Vercel.
