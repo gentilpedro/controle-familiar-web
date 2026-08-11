@@ -11,7 +11,7 @@ Frontend em **React + TypeScript + Vite** do Controle Financeiro — cadastro de
 * React Router
 * Axios
 * Recharts (gráficos dos relatórios)
-* MUI (`@mui/material`)
+* CSS próprio (`src/styles/app.css`), sem biblioteca de componentes
 
 ---
 
@@ -64,6 +64,14 @@ Contém o rewrite de SPA (`/(.*) → /index.html`), necessário porque o app usa
 ### CORS
 
 A API só aceita requisições da origem configurada em `Cors:AllowedOrigins` (secret `WEB_ORIGIN` no repositório da API). Se o domínio de produção do Vercel mudar, esse secret precisa ser atualizado lá também.
+
+---
+
+# 🏷️ Releases
+
+Todo push na `main` também dispara `.github/workflows/release.yml`, que verifica tipos, lint e build e cria uma **Release** no GitHub com a próxima versão (`v1.0.0`, `v1.0.1`, ...), com notas geradas a partir dos PRs mergeados. Esse workflow não faz deploy — quem publica continua sendo a Vercel.
+
+Detalhes em [`ControleFamiliarWeb/README.md`](ControleFamiliarWeb/README.md), que também documenta scripts, variáveis de ambiente e a estrutura de pastas.
 
 ---
 

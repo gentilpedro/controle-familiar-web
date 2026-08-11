@@ -1,0 +1,99 @@
+name: Release
+
+# O deploy deste repositorio nao acontece aqui: quem publica na Vercel e a
+# integracao nativa de Git dela, disparada pelo mesmo push. Este workflow existe
+# para (1) verificar que a main compila e passa no lint e (2) marcar cada versao
+# publicada com uma tag e uma Release no GitHub.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Dois merges seguidos na main leriam as mesmas tags ao calcular a proxima
+# versao e tentariam criar o mesmo numero — a segunda execucao falharia.
+# cancel-in-progress: false para nao abortar uma release ja em andamento.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  APP_DIR: ControleFamiliarWeb
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # Criar tag e Release exige escrita no repositorio.
+    permissions:
+      contents: write
+
+    steps:
+      # fetch-depth: 0 traz o historico completo e as tags — sem isso o calculo
+      # da proxima versao nao enxerga a ultima release e recomecaria do v1.0.0.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ControleFamiliarWeb/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      # `npm run build` roda apenas `vite build`, que transpila sem checar tipos.
+      # A checagem completa precisa ser um passo proprio, senao um erro de tipo
+      # passaria batido pelo CI e so apareceria depois no editor.
+      - name: Checagem de tipos
+        working-directory: ${{ env.APP_DIR }}
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run lint
+
+      # O bundle gerado aqui e descartado de proposito: ele nao vira artefato da
+      # release. O Vite grava o valor de VITE_API_URL dentro do bundle no momento
+      # do build, e esse runner nao tem a variavel de producao — o resultado
+      # apontaria para localhost. O bundle que vai pro ar e sempre o que a Vercel
+      # constroi com as env vars do painel dela. Aqui o build serve so como
+      # verificacao de que a main compila.
+      - name: Build (verificacao)
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run build
+
+      - name: Calcular a proxima versao
+        id: versao
+        run: |
+          # --sort=-v:refname ordena por versao (nao alfabeticamente), entao a
+          # primeira linha e a maior tag. O filtro exige o formato vN.N.N para
+          # ignorar qualquer tag manual fora do padrao.
+          ultima=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1 || true)
+
+          if [ -z "$ultima" ]; then
+            proxima="v1.0.0"
+          else
+            numeros="${ultima#v}"
+            maior="${numeros%%.*}"
+            resto="${numeros#*.}"
+            menor="${resto%%.*}"
+            patch="${resto##*.}"
+            proxima="v${maior}.${menor}.$((patch + 1))"
+          fi
+
+          echo "Ultima versao: ${ultima:-nenhuma} -> nova: $proxima"
+          echo "tag=$proxima" >> "$GITHUB_OUTPUT"
+
+      # --generate-notes monta o corpo da release a partir dos PRs mergeados
+      # desde a release anterior. --target fixa a tag no commit verificado acima.
+      - name: Criar a Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.versao.outputs.tag }}" \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.versao.outputs.tag }}" \
+            --generate-notes
