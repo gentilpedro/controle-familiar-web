@@ -14,6 +14,13 @@ transpila sem checar tipos, então sozinho ele deixa passar erro de tipagem.
 O app **não tem cobrança**. Toda conta autenticada acessa as rotas financeiras; o único controle é o
 `ProtectedRoute` (sessão válida). Não existe gate de assinatura, página de planos nem trial.
 
+## Categorias do sistema
+
+A lista de `/categorias` mistura as categorias da família com as **base do sistema** (Água, Luz,
+Mercado...), que não têm dono e aparecem para todo mundo. A API recusa editar ou excluir essas com
+403, então a tela usa o campo `ehDoSistema` do response para simplesmente não desenhar os botões de
+ação nelas — oferecer o botão e deixar a API negar depois é o comportamento a evitar.
+
 ## Assinatura via Stripe — revertida em 2026-08-11
 
 A cobrança chegou a ser implementada (PRs #18, #19, #21) e foi revertida junto com o lado da API.
