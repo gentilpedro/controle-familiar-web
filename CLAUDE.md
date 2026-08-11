@@ -71,16 +71,20 @@ Regras que sustentam o padrão:
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
 
-## Breakpoints
+## `/transacoes` é paginado — os outros não
 
-Quatro paradas no `app.css`, nesta ordem: **1100px** (formulário de 7 colunas cai para 2), **768px**
-(sidebar vira barra superior; campos vão a 16px), **720px** (tabela vira ficha) e **560px** (formulário
-em 1 coluna; padding de página e cartão encolhem). A landing tem as suas próprias, em `landing.css`
-(940px e 560px).
+A API devolve `/pessoas` e `/categorias` como array puro, mas **`/transacoes` vem embrulhado**:
+`{ itens, paginaAtual, tamanhoPagina, totalItens, totalPaginas }`, com `tamanhoPagina` = 50 por
+padrão e 200 no máximo (query string `pagina`/`tamanhoPagina`). Ver `TransacoesController` no
+repositório da API.
 
-Medida que o Recharts precisa (largura de eixo, margem) **não sai do CSS** — vem do
-`useMediaQuery` (`src/hooks/useMediaQuery.ts`), que usa `useSyncExternalStore` sobre o `matchMedia`.
-Para todo o resto, media query no CSS continua sendo o caminho.
+O `useApiResource` aceita as duas formas e, se o corpo não for nenhuma delas, cai na mensagem de erro
+em vez de repassar. Isso importa: antes ele prometia `T[]` no tipo e entregava o que viesse, então
+quando a API passou a paginar, a aba de transações quebrou com `e.map is not a function` e derrubou a
+tela inteira. Endpoint novo que devolva outro formato agora vira erro visível, não tela branca.
+
+⚠️ **A tela ainda mostra só a primeira página** (50 lançamentos mais recentes), sem indicação disso.
+Falta UI de paginação.
 
 ## CSS
 
