@@ -185,10 +185,10 @@ export default function Pessoas() {
           <table className="table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="celula-id">ID</th>
                 <th>Nome</th>
                 <th>Idade</th>
-                <th>Ações</th>
+                <th className="table-actions">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -203,10 +203,10 @@ export default function Pessoas() {
               ) : (
                 pessoas.map((p) => (
                   <tr key={p.id}>
-                    <td className="celula-id">{p.id}</td>
-                    <td>{p.nome}</td>
-                    <td>{p.idade} anos</td>
-                    <td className="table-actions">
+                    <td className="celula-id" data-rotulo="ID">{p.id}</td>
+                    <td data-rotulo="Nome">{p.nome}</td>
+                    <td data-rotulo="Idade">{p.idade} anos</td>
+                    <td className="table-actions" data-rotulo="Ações">
                       <button
                         className="btn btn-success icon-btn"
                         aria-label="Editar pessoa"
