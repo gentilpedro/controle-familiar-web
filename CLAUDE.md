@@ -57,7 +57,9 @@ Regras que sustentam o padrão:
 - Separação vem de régua fina (`--pauta`), não de sombra. O saldo leva régua dupla, a convenção de
   fechamento do livro-caixa.
 - ⚠️ `.btn-secondary` tem texto em `--tinta`; sobre a sidebar escura ele precisa da inversão que está
-  em `.sidebar-sair`. Botão novo dentro da sidebar exige o mesmo cuidado.
+  em `.btn.sidebar-sair`. O seletor leva as **duas** classes de propósito: as regras da sidebar vêm
+  antes de `.btn-secondary` no `app.css` e, com uma classe só, perderiam a cascata — foi assim que o
+  "Sair" ficou invisível. Botão novo dentro da sidebar exige o mesmo cuidado.
 
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
