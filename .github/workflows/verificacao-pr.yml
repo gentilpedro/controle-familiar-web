@@ -1,0 +1,56 @@
+name: Verificação de Pull Request
+
+# Roda as mesmas checagens do release.yml em todo PR para a main, sem criar
+# release nenhuma.
+#
+# Até aqui os workflows só rodavam em push na main, ou seja, um PR chegava ao
+# merge sem nunca ter sido compilado contra a main atual. Foi assim que o
+# repositório da API quebrou: dois PRs que passavam isolados não compilavam
+# juntos.
+#
+# O evento pull_request faz checkout do MERGE entre o PR e a main atual, não do
+# branch do PR isolado — é o que pega esse tipo de conflito.
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: verificacao-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  APP_DIR: ControleFamiliarWeb
+
+jobs:
+  build_e_lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ControleFamiliarWeb/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      # `npm run build` roda só `vite build`, que transpila sem checar tipos.
+      # Sem este passo, um erro de tipagem passaria batido pelo CI.
+      - name: Checagem de tipos
+        working-directory: ${{ env.APP_DIR }}
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run lint
+
+      - name: Build
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run build
