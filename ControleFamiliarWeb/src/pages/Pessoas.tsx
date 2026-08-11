@@ -203,7 +203,7 @@ export default function Pessoas() {
               ) : (
                 pessoas.map((p) => (
                   <tr key={p.id}>
-                    <td>{p.id}</td>
+                    <td className="celula-id">{p.id}</td>
                     <td>{p.nome}</td>
                     <td>{p.idade} anos</td>
                     <td className="table-actions">

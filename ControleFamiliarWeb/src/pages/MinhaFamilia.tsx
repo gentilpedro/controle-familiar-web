@@ -99,7 +99,7 @@ export default function MinhaFamilia() {
           )}
         </div>
 
-        <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 12, marginBottom: 0 }}>
+        <p style={{ color: "var(--tinta-suave)", fontSize: 13, marginTop: 12, marginBottom: 0 }}>
           Manda o link pronto (whatsapp, e-mail, etc.) — quem abrir já cai no cadastro com o código preenchido.
         </p>
       </div>

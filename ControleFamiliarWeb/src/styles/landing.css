@@ -11,18 +11,22 @@
  */
 
 .lp {
-  /* Papel-razao: o verde palido do papel contabil pautado */
-  --lp-papel: #f4f7f0;
-  --lp-papel-alto: #fcfdfb;
-  --lp-tinta: #0f1f18;
-  --lp-tinta-suave: #4a5c53;
-  --lp-credito: #1f7a4c;
-  --lp-debito: #b4472f;
-  --lp-pauta: #c9d6c4;
+  /*
+   * A identidade agora e uma so: os valores moram no :root do app.css e o
+   * painel usa os mesmos. Estes aliases existem so para nao reescrever as
+   * dezenas de var(--lp-*) abaixo — mudar a paleta se faz num lugar so.
+   */
+  --lp-papel: var(--papel);
+  --lp-papel-alto: var(--superficie);
+  --lp-tinta: var(--tinta);
+  --lp-tinta-suave: var(--tinta-suave);
+  --lp-credito: var(--credito);
+  --lp-debito: var(--debito);
+  --lp-pauta: var(--pauta);
 
-  --lp-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
-  --lp-corpo: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --lp-cifra: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+  --lp-display: var(--display);
+  --lp-corpo: var(--corpo);
+  --lp-cifra: var(--cifra);
 
   --lp-max: 1120px;
 
@@ -97,7 +101,7 @@
 }
 
 .lp-botao-solido:hover {
-  background: #18613c;
+  background: var(--credito-forte);
 }
 
 .lp-botao-vazado {
