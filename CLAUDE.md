@@ -106,6 +106,19 @@ tela inteira. Endpoint novo que devolva outro formato agora vira erro visível, 
 ⚠️ **A tela ainda mostra só a primeira página** (50 lançamentos mais recentes), sem indicação disso.
 Falta UI de paginação.
 
+## Tipo da transação vem da categoria (desde 2026-08-12)
+
+`Transacoes.tsx` não pergunta mais Receita/Despesa quando a categoria escolhida já decide isso
+sozinha (`Categoria.finalidade` 1 ou 2) — escolher a categoria já define o tipo, e o `<select>` de
+Tipo vira um badge somente-leitura. A pergunta manual só volta quando a categoria aceita as duas
+finalidades (`finalidade === 3`, "Ambas" — ex.: a categoria do sistema "Outros"). Antes disso dava
+pra escolher Tipo e Categoria incompatíveis (ex.: Despesa + categoria "Salário") e só descobrir no
+400 da API (`TransacaoService`, REGRA 2) depois de enviar.
+
+O catch do formulário passou a usar `mensagemDeErro` em vez de texto fixo — importa porque a regra
+de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quando a categoria é
+"Ambas", e antes essa explicação da API era descartada.
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)
