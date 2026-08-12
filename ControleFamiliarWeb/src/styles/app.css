@@ -105,14 +105,46 @@ a {
   border-right: 1px solid var(--pauta);
 }
 
+.sidebar-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
 .sidebar-title {
   font-family: var(--display);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
   padding: 0 10px;
-  margin-bottom: 28px;
   color: #fff;
+}
+
+/*
+ * Só existe no celular — no desktop o menu está sempre aberto e o botao sai.
+ * Nao usa .btn de proposito: .btn-secondary tem texto em --tinta, que sobre a
+ * sidebar escura ficaria invisivel (mesmo motivo da inversao em .sidebar-sair).
+ */
+.sidebar-menu-botao {
+  display: none;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(244, 247, 240, 0.28);
+  border-radius: var(--raio-sm);
+  background: transparent;
+  color: var(--papel);
+  font-family: var(--corpo);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-menu-botao:hover {
+  background: rgba(244, 247, 240, 0.08);
+  border-color: var(--papel);
 }
 
 .sidebar-nav {
@@ -162,17 +194,23 @@ a {
 
 /*
  * .btn-secondary tem texto em --tinta, que sobre a sidebar escura ficaria
- * invisivel. Aqui ele inverte para a cor do papel.
+ * invisivel. Aqui ele inverte para branco.
+ *
+ * O seletor precisa do .btn junto: `.btn-secondary` esta declarado mais abaixo
+ * neste arquivo e, com a mesma especificidade (uma classe), venceria pela ordem
+ * da cascata — foi isso que apagou o "Sair" contra o fundo escuro. Com duas
+ * classes a inversao ganha independente de onde a regra esteja.
  */
-.sidebar-sair {
+.btn.sidebar-sair {
   width: 100%;
   border-color: rgba(244, 247, 240, 0.28);
-  color: var(--papel);
+  color: #fff;
 }
 
-.sidebar-sair:hover {
+.btn.sidebar-sair:hover {
   background: rgba(244, 247, 240, 0.08);
-  border-color: var(--papel);
+  border-color: #fff;
+  color: #fff;
 }
 
 .sidebar-privacidade {
@@ -428,9 +466,26 @@ a {
   font-size: 13px;
 }
 
-.table-actions {
-  display: flex;
-  gap: 8px;
+/*
+ * display:flex numa <td> tira a celula do algoritmo de tabela: a linha para de
+ * alinhar com as demais e a regua inferior quebra no meio da grade. Os botoes
+ * ja sao inline-flex, entao basta mante-los na mesma linha e espacar por margem.
+ */
+.table td.table-actions {
+  white-space: nowrap;
+}
+
+.table td.table-actions > * + * {
+  margin-left: 8px;
+}
+
+/* Colunas de servico encolhem ate o conteudo; a folga sobra para a descricao */
+.table th.celula-id,
+.table td.celula-id,
+.table th.table-actions,
+.table td.table-actions {
+  width: 1%;
+  white-space: nowrap;
 }
 
 /* ---------- Etiquetas ---------- */
@@ -470,9 +525,15 @@ a {
 
 /* ---------- Totais ---------- */
 
+/*
+ * auto-fit em vez de tres colunas fixas: os cartoes reencaixam sozinhos e nao
+ * precisam de breakpoint. Antes eles caiam para uma coluna so em 1100px, entao
+ * um notebook de 1024 empilhava Receitas, Despesas e Saldo em tres linhas
+ * quando os tres cabiam lado a lado.
+ */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -712,12 +773,17 @@ a {
 
 /* ---------- Responsivo ---------- */
 
+/*
+ * O formulario de transacao tem cinco campos e dois botoes em sete colunas —
+ * so cabe em tela larga. Antes ele ia direto de sete colunas para uma, entao
+ * um notebook de 1024px ja recebia tudo empilhado. A parada em duas colunas
+ * cobre notebook e tablet; uma coluna fica para o celular, mais abaixo.
+ */
 @media (max-width: 1100px) {
   .form-row,
   .form-row.pessoas,
-  .form-row.categorias,
-  .summary-grid {
-    grid-template-columns: 1fr;
+  .form-row.categorias {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .sidebar {
@@ -725,6 +791,14 @@ a {
   }
 }
 
+/*
+ * No celular a sidebar deixa de ser coluna e vira barra superior: so a marca e
+ * o botao Menu ficam visiveis, o resto recolhe. A faixa horizontal de links que
+ * havia aqui antes gastava a primeira dobra inteira — sete links quebrando
+ * linha mais nome, familia, Sair e privacidade — antes de qualquer conteudo.
+ *
+ * A barra e sticky para o menu continuar ao alcance depois de rolar a lista.
+ */
 @media (max-width: 768px) {
   .layout {
     flex-direction: column;
@@ -733,31 +807,37 @@ a {
   .sidebar {
     width: 100%;
     height: auto;
-    position: relative;
-    padding: 18px 12px;
+    padding: 12px 16px;
+    z-index: 20;
     border-right: none;
     border-bottom: 1px solid var(--pauta);
   }
 
+  .sidebar-topo {
+    margin-bottom: 0;
+  }
+
   .sidebar-title {
-    margin-bottom: 14px;
+    padding: 0;
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
+  .sidebar-menu-botao {
+    display: inline-flex;
   }
 
-  /* Na horizontal a barra da esquerda nao le como marcador; vira sublinhado */
-  .sidebar-link {
-    border-left: none;
-    border-bottom: 2px solid transparent;
+  .sidebar-recolhivel {
+    display: none;
   }
 
-  .sidebar-link:hover {
-    border-left: none;
-    border-bottom-color: var(--credito);
+  /*
+   * Com a barra grudada no topo, o painel aberto pode passar da tela — dai o
+   * limite de altura com rolagem propria.
+   */
+  .sidebar-recolhivel.aberto {
+    display: block;
+    margin-top: 14px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
   }
 
   .page {
@@ -766,6 +846,157 @@ a {
 
   .page-title {
     font-size: 25px;
+  }
+
+  /*
+   * 16px nao e escolha estetica: o Safari do iPhone da zoom na pagina quando o
+   * campo focado tem fonte menor que isso, e depois nao volta — o usuario fica
+   * com a tela deslocada no meio do cadastro. No desktop segue 15px.
+   */
+  .input,
+  .select {
+    font-size: 16px;
+  }
+
+  /* Alvo de toque: 40px passa do minimo confortavel por pouco, 44 nao */
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Formulario com campo alto demais nao rola dentro do modal sem isto */
+  .modal {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  .auth-card {
+    padding: 24px;
+  }
+}
+
+/*
+ * Abaixo de 720px nao cabe uma tabela de verdade — Transacoes tem seis colunas.
+ * Cada linha vira uma ficha empilhada e o cabecalho reaparece dentro da celula,
+ * vindo de `data-rotulo`. Por isso todo <td> de dado carrega esse atributo:
+ * sem ele a celula fica sem legenda no celular.
+ *
+ * O modo ficha usa display:block, o que derruba o papel semantico de tabela —
+ * com isso o <thead> vira ruido (o cabecalho ja nao se associa a celula
+ * nenhuma), entao ele sai e quem informa olho e leitor de tela e o ::before.
+ */
+@media (max-width: 720px) {
+  .table-wrapper {
+    overflow-x: visible;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    border: 1px solid var(--pauta);
+    border-radius: var(--raio-sm);
+    margin-bottom: 12px;
+  }
+
+  .table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Sem cursor, o realce de linha inteira nao tem funcao e so suja a ficha */
+  .table tbody tr:hover {
+    background: transparent;
+  }
+
+  .table tbody td,
+  .table tbody tr:last-child td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--pauta);
+    text-align: right;
+  }
+
+  .table tbody tr td:last-child {
+    border-bottom: none;
+  }
+
+  /* A legenda ocupa o lugar do cabecalho: mesma sobrancelha mono da tabela */
+  .table tbody td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    flex: 0 0 auto;
+    font-family: var(--cifra);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    text-align: left;
+  }
+
+  /*
+   * Precisa ser explicito: a largura de servico (width:1%) vem de um seletor
+   * de duas classes, que ganha do `.table td` acima.
+   */
+  .table td.celula-id,
+  .table td.celula-valor,
+  .table td.table-actions {
+    width: auto;
+  }
+
+  /*
+   * A celula de acoes tem varios botoes: sem isso o space-between espalharia
+   * um deles no meio da ficha. A legenda empurra, os botoes ficam juntos a
+   * direita.
+   */
+  .table td.table-actions::before {
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .form-row,
+  .form-row.pessoas,
+  .form-row.categorias {
+    grid-template-columns: 1fr;
+  }
+
+  /* Empilhado, o botao de acao do cabecalho ocupa a linha inteira */
+  .page-header > .btn {
+    width: 100%;
+  }
+
+  /*
+   * Numa tela de 360px, 20px de pagina mais 24px de cartao comem 88px — quase
+   * um quarto da largura — antes do conteudo. A folga cede para o dado.
+   */
+  .page {
+    padding: 20px 14px;
+  }
+
+  .card,
+  .chart-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .summary-card {
+    padding: 16px 18px;
+  }
+
+  .summary-value {
+    font-size: 23px;
   }
 }
 

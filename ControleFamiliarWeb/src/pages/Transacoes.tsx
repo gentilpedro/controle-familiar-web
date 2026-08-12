@@ -159,7 +159,7 @@ export default function Transacoes() {
           <table className="table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="celula-id">ID</th>
                 <th>Descrição</th>
                 <th className="celula-valor">Valor</th>
                 <th>Tipo</th>
@@ -179,12 +179,13 @@ export default function Transacoes() {
               ) : (
                 transacoes.map((t) => (
                   <tr key={t.id}>
-                    <td className="celula-id">{t.id}</td>
-                    <td>{t.descricao}</td>
+                    <td className="celula-id" data-rotulo="ID">{t.id}</td>
+                    <td data-rotulo="Descrição">{t.descricao}</td>
                     {/* Cor do valor segue o tipo, como num extrato: receita em
                         credito, despesa em debito. O badge ao lado mantem a
                         distincao legivel sem depender da cor. */}
                     <td
+                      data-rotulo="Valor"
                       className={
                         textoTipoTransacao(t.tipo) === "Receita"
                           ? "celula-valor credito"
@@ -193,13 +194,13 @@ export default function Transacoes() {
                     >
                       {formatCurrency(Number(t.valor))}
                     </td>
-                    <td>
+                    <td data-rotulo="Tipo">
                       <span className={classeBadge(textoTipoTransacao(t.tipo))}>
                         {textoTipoTransacao(t.tipo)}
                       </span>
                     </td>
-                    <td>{t.pessoa}</td>
-                    <td>{t.categoria}</td>
+                    <td data-rotulo="Pessoa">{t.pessoa}</td>
+                    <td data-rotulo="Categoria">{t.categoria}</td>
                   </tr>
                 ))
               )}

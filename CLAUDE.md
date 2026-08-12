@@ -26,6 +26,13 @@ funcionando como sempre: é o cadastro de quem não tem login, como um filho peq
 O app **não tem cobrança**. Toda conta autenticada acessa as rotas financeiras; o único controle é o
 `ProtectedRoute` (sessão válida). Não existe gate de assinatura, página de planos nem trial.
 
+## Categorias do sistema
+
+A lista de `/categorias` mistura as categorias da família com as **base do sistema** (Água, Luz,
+Mercado...), que não têm dono e aparecem para todo mundo. A API recusa editar ou excluir essas com
+403, então a tela usa o campo `ehDoSistema` do response para simplesmente não desenhar os botões de
+ação nelas — oferecer o botão e deixar a API negar depois é o comportamento a evitar.
+
 ## Assinatura via Stripe — revertida em 2026-08-11
 
 A cobrança chegou a ser implementada (PRs #18, #19, #21) e foi revertida junto com o lado da API.
@@ -69,10 +76,27 @@ Regras que sustentam o padrão:
 - Separação vem de régua fina (`--pauta`), não de sombra. O saldo leva régua dupla, a convenção de
   fechamento do livro-caixa.
 - ⚠️ `.btn-secondary` tem texto em `--tinta`; sobre a sidebar escura ele precisa da inversão que está
-  em `.sidebar-sair`. Botão novo dentro da sidebar exige o mesmo cuidado.
+  em `.btn.sidebar-sair`. O seletor leva as **duas** classes de propósito: as regras da sidebar vêm
+  antes de `.btn-secondary` no `app.css` e, com uma classe só, perderiam a cascata — foi assim que o
+  "Sair" ficou invisível. Botão novo dentro da sidebar exige o mesmo cuidado.
 
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
+
+## `/transacoes` é paginado — os outros não
+
+A API devolve `/pessoas` e `/categorias` como array puro, mas **`/transacoes` vem embrulhado**:
+`{ itens, paginaAtual, tamanhoPagina, totalItens, totalPaginas }`, com `tamanhoPagina` = 50 por
+padrão e 200 no máximo (query string `pagina`/`tamanhoPagina`). Ver `TransacoesController` no
+repositório da API.
+
+O `useApiResource` aceita as duas formas e, se o corpo não for nenhuma delas, cai na mensagem de erro
+em vez de repassar. Isso importa: antes ele prometia `T[]` no tipo e entregava o que viesse, então
+quando a API passou a paginar, a aba de transações quebrou com `e.map is not a function` e derrubou a
+tela inteira. Endpoint novo que devolva outro formato agora vira erro visível, não tela branca.
+
+⚠️ **A tela ainda mostra só a primeira página** (50 lançamentos mais recentes), sem indicação disso.
+Falta UI de paginação.
 
 ## CSS
 

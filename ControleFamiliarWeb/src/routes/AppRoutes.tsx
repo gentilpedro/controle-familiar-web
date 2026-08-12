@@ -1,9 +1,10 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Layout from "../components/Layout";
 import { AuthProvider } from "../context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
+import RotaNaoEncontrada from "./RotaNaoEncontrada";
 
 const Home = lazy(() => import("../pages/Home"));
 const Pessoas = lazy(() => import("../pages/Pessoas"));
@@ -46,7 +47,13 @@ export default function AppRoutes() {
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="minha-familia" element={<MinhaFamilia />} />
               <Route path="meus-dados" element={<MeusDados />} />
+
+              {/* Subrota inexistente do painel renderizaria o Layout com o
+                  Outlet vazio: sidebar e area de conteudo em branco. */}
+              <Route path="*" element={<Navigate to="/painel" replace />} />
             </Route>
+
+            <Route path="*" element={<RotaNaoEncontrada />} />
           </Routes>
         </Suspense>
       </AuthProvider>
