@@ -103,8 +103,16 @@ em vez de repassar. Isso importa: antes ele prometia `T[]` no tipo e entregava o
 quando a API passou a paginar, a aba de transações quebrou com `e.map is not a function` e derrubou a
 tela inteira. Endpoint novo que devolva outro formato agora vira erro visível, não tela branca.
 
-⚠️ **A tela ainda mostra só a primeira página** (50 lançamentos mais recentes), sem indicação disso.
-Falta UI de paginação.
+A tela navega entre as páginas pelo `useApiPaginado` (`src/hooks/useApiPaginado.ts`) + o componente
+`Paginacao`, com 20 por página. **Lista paginada usa esse hook; lista inteira usa o `useApiResource`.**
+
+Dois detalhes que o hook resolve e que reaparecem se alguém reescrever:
+
+- `recarregar()` **volta para a página 1**, não recarrega a página atual. A API ordena do mais
+  recente para o mais antigo, então o lançamento recém-criado nasce no topo da primeira página —
+  recarregar sem sair da página 4 esconderia justamente o que o usuário acabou de cadastrar.
+- `carregando` sobe **no handler**, não dentro do efeito: o lint (`react-hooks/set-state-in-effect`)
+  barra `setState` síncrono em efeito.
 
 ## Tipo da transação vem da categoria (desde 2026-08-12)
 

@@ -7,8 +7,13 @@ import type { Pessoa } from "../types/Pessoa";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency, formatDate } from "../utils/format";
 import { useApiResource } from "../hooks/useApiResource";
+import { useApiPaginado } from "../hooks/useApiPaginado";
 import { mensagemDeErro } from "../utils/erro";
 import Modal from "../components/Modal";
+import Paginacao from "../components/Paginacao";
+
+// A API aceita até 200 por página; 20 mantém a tabela numa tela sem rolagem longa.
+const TAMANHO_PAGINA = 20;
 
 // Mesma numeração de TipoTransacao (1 Receita, 2 Despesa) usada por
 // Categoria.finalidade — é o que permite herdar o tipo direto da categoria
@@ -27,7 +32,18 @@ function hojeLocalISO(): string {
 }
 
 export default function Transacoes() {
-  const { dados: transacoes, carregando, erro, recarregar } = useApiResource<Transacao>("/transacoes");
+  const {
+    dados: transacoes,
+    pagina,
+    totalItens,
+    totalPaginas,
+    carregando,
+    erro,
+    irPara,
+    recarregar,
+  } = useApiPaginado<Transacao>("/transacoes", TAMANHO_PAGINA);
+
+  // Pessoas e categorias alimentam os selects do formulário e vêm inteiras
   const { dados: pessoas } = useApiResource<Pessoa>("/pessoas");
   const { dados: categorias } = useApiResource<Categoria>("/categorias");
 
@@ -517,7 +533,12 @@ export default function Transacoes() {
               </tr>
             </thead>
             <tbody>
-              {carregando ? (
+              {/*
+                "Carregando" só na primeira carga: na troca de página as linhas
+                antigas ficam à vista até as novas chegarem, senão a tabela
+                pisca vazia e a altura da página pula a cada clique.
+              */}
+              {carregando && transacoes.length === 0 ? (
                 <tr>
                   <td colSpan={9}>Carregando...</td>
                 </tr>
@@ -964,6 +985,17 @@ export default function Transacoes() {
             {enviando ? "Salvando..." : "Salvar"}
           </button>
         </Modal>
+
+        <Paginacao
+          pagina={pagina}
+          totalPaginas={totalPaginas}
+          totalItens={totalItens}
+          tamanhoPagina={TAMANHO_PAGINA}
+          carregando={carregando}
+          itemSingular="lançamento"
+          itemPlural="lançamentos"
+          onIrPara={irPara}
+        />
       </div>
     </>
   );
