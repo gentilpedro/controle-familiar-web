@@ -119,6 +119,29 @@ O catch do formulário passou a usar `mensagemDeErro` em vez de texto fixo — i
 de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quando a categoria é
 "Ambas", e antes essa explicação da API era descartada.
 
+## Transações recorrentes/parceladas (em construção, desde 2026-08-12)
+
+Bloco grande, em vários PRs sequenciais nos dois repositórios — compra parcelada em N meses e
+salário dividido por percentual em quinzenas. Plano completo salvo em
+`C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md` no momento em que isso foi
+escrito. Os 4 blocos de API já estão prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai
+o lado do front, também em blocos sequenciais.
+
+**Passo 1 — `Transacao.data`**: antes disso, transação não tinha data nenhuma. `types/Transacao.ts`
+ganha `data: string` (formato `DateOnly` da API, `"AAAA-MM-DD"`, sem hora). Primeiro `<input
+type="date">` do projeto — não existia padrão anterior pra copiar.
+
+⚠️ **`formatDate` tratava só datetime completo** (`RelatorioFamiliar.criadoEm`, com hora) — `new
+Date("2026-08-15")` sem componente de hora é interpretado como **meia-noite UTC**, e num fuso atrás
+de UTC (Brasil, UTC-3) isso volta um dia na exibição. Achado ao ligar a coluna Data em
+`Transacoes.tsx`. `formatDate` agora detecta string `"AAAA-MM-DD"` pura (regex) e monta o `Date` a
+partir dos componentes locais (`new Date(ano, mes-1, dia)`), sem passar pelo parser — datetime
+completo continua pelo caminho antigo. Endpoint novo que devolva uma data sem hora deve continuar
+funcionando por essa mesma função, não precisa de outra.
+
+`.form-row` (só a variante sem classe, usada exclusivamente por `Transacoes.tsx`) ganhou uma coluna:
+`grid-template-columns` foi de 7 pra 8 tracks. Não mexe em `.form-row.pessoas`/`.form-row.categorias`.
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)
