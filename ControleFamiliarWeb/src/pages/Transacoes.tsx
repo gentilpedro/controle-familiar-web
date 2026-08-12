@@ -247,6 +247,68 @@ export default function Transacoes() {
     }
   }
 
+  // ---------- Salário quinzenal (divisão percentual) ----------
+
+  // Nunca por nome: o flag é o que trava esse fluxo à categoria certa,
+  // mesmo raciocínio do backend (Categoria.AceitaDivisaoPercentual). Hoje só
+  // a categoria de sistema "Salário" tem isso.
+  const categoriaSalario = categorias.find((c) => c.aceitaDivisaoPercentual);
+
+  const [modalSalario, setModalSalario] = useState(false);
+  const [descricaoSalario, setDescricaoSalario] = useState("Salário");
+  const [valorTotalSalario, setValorTotalSalario] = useState<number>(0);
+  const [mesReferencia, setMesReferencia] = useState(hojeLocalISO().slice(0, 7)); // "AAAA-MM"
+  const [pessoaIdSalario, setPessoaIdSalario] = useState<number | "">("");
+  const [diaQuinzena1, setDiaQuinzena1] = useState<number>(15);
+  const [percentualQuinzena1, setPercentualQuinzena1] = useState<number>(50);
+  const [diaQuinzena2, setDiaQuinzena2] = useState<number>(30);
+  const [percentualQuinzena2, setPercentualQuinzena2] = useState<number>(50);
+
+  function abrirModalSalario() {
+    setErroAcao("");
+    setSucesso("");
+    setDescricaoSalario("Salário");
+    setValorTotalSalario(0);
+    setMesReferencia(hojeLocalISO().slice(0, 7));
+    setPessoaIdSalario("");
+    setDiaQuinzena1(15);
+    setPercentualQuinzena1(50);
+    setDiaQuinzena2(30);
+    setPercentualQuinzena2(50);
+    setModalSalario(true);
+  }
+
+  async function criarSalarioQuinzenal() {
+    if (!categoriaSalario) return;
+
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
+
+    try {
+      await api.post("/transacoes/recorrencia-percentual", {
+        descricao: descricaoSalario,
+        valorTotal: valorTotalSalario,
+        // O dia importa, não o mês do input em si — dia 1 fixo, cada
+        // ocorrência já traz o próprio Dia.
+        mesReferencia: `${mesReferencia}-01`,
+        ocorrencias: [
+          { dia: diaQuinzena1, percentual: percentualQuinzena1 },
+          { dia: diaQuinzena2, percentual: percentualQuinzena2 }
+        ],
+        pessoaId: pessoaIdSalario,
+        categoriaId: categoriaSalario.id
+      });
+      setModalSalario(false);
+      setSucesso("Salário quinzenal cadastrado com sucesso.");
+      await recarregar();
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return (
     <>
       <div className="page-header">
@@ -256,6 +318,20 @@ export default function Transacoes() {
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {/*
+            Só aparece se existir categoria com AceitaDivisaoPercentual — hoje
+            é sempre "Salário" (categoria de sistema, seedada), mas o botão
+            desaparece em vez de quebrar se isso um dia não existir.
+          */}
+          {categoriaSalario && (
+            <button
+              className="btn btn-secondary"
+              onClick={abrirModalSalario}
+            >
+              Novo Salário
+            </button>
+          )}
+
           <button
             className="btn btn-secondary"
             onClick={abrirModalParcelada}
@@ -683,6 +759,129 @@ export default function Transacoes() {
           <button
             className="btn btn-success"
             onClick={criarParcelada}
+            disabled={enviando}
+          >
+            {enviando ? "Salvando..." : "Salvar"}
+          </button>
+        </Modal>
+
+        <Modal
+          open={modalSalario}
+          title="Novo Salário"
+          onClose={() => setModalSalario(false)}
+        >
+          <label className="sr-only" htmlFor="salario-descricao">Descrição</label>
+          <input
+            id="salario-descricao"
+            className="input"
+            placeholder="Descrição"
+            value={descricaoSalario}
+            onChange={(e) => setDescricaoSalario(e.target.value)}
+          />
+
+          <label className="sr-only" htmlFor="salario-valor-total">Valor total</label>
+          <input
+            id="salario-valor-total"
+            className="input"
+            type="number"
+            placeholder="Valor total do mês"
+            value={valorTotalSalario}
+            onChange={(e) => setValorTotalSalario(Number(e.target.value))}
+          />
+
+          <label className="sr-only" htmlFor="salario-mes">Mês de referência</label>
+          <input
+            id="salario-mes"
+            className="input"
+            type="month"
+            value={mesReferencia}
+            onChange={(e) => setMesReferencia(e.target.value)}
+          />
+
+          <label className="sr-only" htmlFor="salario-pessoa">Pessoa</label>
+          <select
+            id="salario-pessoa"
+            className="select"
+            value={pessoaIdSalario}
+            onChange={(e) => setPessoaIdSalario(Number(e.target.value))}
+          >
+            <option value="">Selecionar Pessoa</option>
+            {pessoas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
+          </select>
+
+          {/*
+            Percentuais não precisam somar 100 — adiantamento e saldo podem
+            vir de bases diferentes (a API aceita isso de propósito).
+          */}
+          <p style={{ color: "var(--tinta-suave)", fontSize: 13, margin: "4px 0 0" }}>
+            Primeira quinzena
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label className="sr-only" htmlFor="salario-dia-1">Dia da primeira quinzena</label>
+              <input
+                id="salario-dia-1"
+                className="input"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Dia"
+                value={diaQuinzena1}
+                onChange={(e) => setDiaQuinzena1(Number(e.target.value))}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="sr-only" htmlFor="salario-percentual-1">Percentual da primeira quinzena</label>
+              <input
+                id="salario-percentual-1"
+                className="input"
+                type="number"
+                placeholder="% do total"
+                value={percentualQuinzena1}
+                onChange={(e) => setPercentualQuinzena1(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <p style={{ color: "var(--tinta-suave)", fontSize: 13, margin: "4px 0 0" }}>
+            Segunda quinzena
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label className="sr-only" htmlFor="salario-dia-2">Dia da segunda quinzena</label>
+              <input
+                id="salario-dia-2"
+                className="input"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Dia"
+                value={diaQuinzena2}
+                onChange={(e) => setDiaQuinzena2(Number(e.target.value))}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="sr-only" htmlFor="salario-percentual-2">Percentual da segunda quinzena</label>
+              <input
+                id="salario-percentual-2"
+                className="input"
+                type="number"
+                placeholder="% do total"
+                value={percentualQuinzena2}
+                onChange={(e) => setPercentualQuinzena2(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
+
+          <button
+            className="btn btn-success"
+            onClick={criarSalarioQuinzenal}
             disabled={enviando}
           >
             {enviando ? "Salvando..." : "Salvar"}
