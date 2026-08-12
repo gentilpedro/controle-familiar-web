@@ -106,6 +106,25 @@ tela inteira. Endpoint novo que devolva outro formato agora vira erro visível, 
 ⚠️ **A tela ainda mostra só a primeira página** (50 lançamentos mais recentes), sem indicação disso.
 Falta UI de paginação.
 
+## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
+
+Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)
+já mostra receita/despesa por pessoa num gráfico, mas não saldo individual nem participação
+percentual, e não tem o histórico de quem esteve na família.
+
+- **Saldo por pessoa e participação % não pediram nada novo da API.** `/relatorios/totais-por-pessoa`
+  já devolve `saldo` calculado por pessoa (`TotaisPessoaDto.Saldo` no backend); a % é só
+  `valor / total` calculado aqui na página.
+- **O histórico vem de `GET /familia/historico`**, endpoint novo — ver "Histórico da família" no
+  `CLAUDE.md` da API. Mapeamento de badge por ação fica local à página (`classeBadgeHistorico`), não
+  em `utils/badge.ts`: aquele arquivo só cobre o trio Receita/Despesa/Ambas, e as quatro ações do
+  histórico (`CriacaoFamilia`, `EntradaFamilia`, `RemocaoMembro`, `ExclusaoConta`) são um domínio
+  diferente, sem razão pra forçar as duas coisas no mesmo tipo.
+- **Item de menu só aparece com `familia.membros.length > 1`** (`Layout.tsx`) — numa família de uma
+  pessoa só, "participação de cada membro" não compara nada. A rota em si (`/painel/relatorio-familiar`)
+  continua acessível por URL direta mesmo sem o item no menu; sem membro pra comparar, a página só
+  mostra uma linha e um histórico curto, não quebra.
+
 ## CSS
 
 `.btn` (`src/styles/app.css`) tem `display: inline-flex; align-items: center; justify-content: center;`

@@ -10,6 +10,7 @@ const Home = lazy(() => import("../pages/Home"));
 const Categorias = lazy(() => import("../pages/Categorias"));
 const Transacoes = lazy(() => import("../pages/Transacoes"));
 const Relatorios = lazy(() => import("../pages/Relatorio"));
+const RelatorioFamiliar = lazy(() => import("../pages/RelatorioFamiliar"));
 const Login = lazy(() => import("../pages/Login"));
 const Registrar = lazy(() => import("../pages/Registrar"));
 const MinhaFamilia = lazy(() => import("../pages/MinhaFamilia"));
@@ -43,6 +44,12 @@ export default function AppRoutes() {
               <Route path="categorias" element={<Categorias />} />
               <Route path="transacoes" element={<Transacoes />} />
               <Route path="relatorios" element={<Relatorios />} />
+              {/*
+                Sem gate de família aqui: quem digita a URL direto numa
+                família sozinha só vê tabela e histórico vazios, não um erro.
+                O item some do menu (Layout), mas a rota continua acessível.
+              */}
+              <Route path="relatorio-familiar" element={<RelatorioFamiliar />} />
               <Route path="minha-familia" element={<MinhaFamilia />} />
               <Route path="meus-dados" element={<MeusDados />} />
 

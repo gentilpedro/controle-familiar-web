@@ -48,6 +48,14 @@ export default function Layout() {
             <Link className="sidebar-link" to="/painel/categorias">Categorias</Link>
             <Link className="sidebar-link" to="/painel/transacoes">Transações</Link>
             <Link className="sidebar-link" to="/painel/relatorios">Relatórios</Link>
+            {/*
+              Numa família de uma pessoa só, comparar "participação de cada
+              membro" não diz nada — o item nem aparece. A comparação
+              volta a fazer sentido assim que um segundo membro entra.
+            */}
+            {(familia?.membros.length ?? 0) > 1 && (
+              <Link className="sidebar-link" to="/painel/relatorio-familiar">Relatório Familiar</Link>
+            )}
             <Link className="sidebar-link" to="/painel/minha-familia">Minha Família</Link>
             <Link className="sidebar-link" to="/painel/meus-dados">Meus Dados</Link>
           </nav>
