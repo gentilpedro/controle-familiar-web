@@ -45,7 +45,6 @@ export default function Layout() {
           */}
           <nav className="sidebar-nav" onClick={() => setMenuAberto(false)}>
             <Link className="sidebar-link" to="/painel">Home</Link>
-            <Link className="sidebar-link" to="/painel/pessoas">Pessoas</Link>
             <Link className="sidebar-link" to="/painel/categorias">Categorias</Link>
             <Link className="sidebar-link" to="/painel/transacoes">Transações</Link>
             <Link className="sidebar-link" to="/painel/relatorios">Relatórios</Link>

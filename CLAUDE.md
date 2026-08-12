@@ -16,10 +16,18 @@ titular na mesma chamada — quem se cadastra já aparece na lista de Pessoas, s
 si mesmo à mão antes de lançar a primeira transação. Ver `AuthService.Registrar` no repositório da
 API.
 
-`Pessoa.ehMembro` diz se ela representa uma conta da família. Em `Pessoas.tsx`, isso vira o badge
-"Membro" e o botão de excluir some — a API recusa (400) apagar uma pessoa vinculada, então esconder
-poupa a viagem ao servidor para descobrir isso. Pessoa cadastrada à mão (`ehMembro: false`) continua
-funcionando como sempre: é o cadastro de quem não tem login, como um filho pequeno.
+`Pessoa.ehMembro` diz se ela representa uma conta da família. Pessoa cadastrada à mão
+(`ehMembro: false`) é o cadastro de quem não tem login — um filho pequeno, por exemplo.
+
+**Não existe mais uma página `Pessoas` nem item `Pessoas` no menu** (desde 2026-08-12). O cadastro
+manual de dependente virou uma seção dentro de `MinhaFamilia.tsx`, junto da tabela de Membros —
+`souAdministrador` esconde tanto o formulário de criar quanto os botões de editar/excluir de cada
+linha, espelhando a API (`PessoaService` agora exige admin pra criar/editar/excluir pessoa manual;
+`GET /pessoas` continua aberto a qualquer membro). A tabela de Dependentes filtra
+`pessoas.filter(p => !p.ehMembro)` — a pessoa de um membro já aparece na tabela de Membros acima,
+listar de novo seria repetir a mesma informação.
+
+O atalho da Home que apontava pra `/painel/pessoas` agora vai pra `/painel/minha-familia`.
 
 ## Acesso: uso livre
 
