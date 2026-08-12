@@ -339,6 +339,12 @@ a {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+/* Vale para Salvando..., Anterior/Proxima no fim da lista e afins */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-primary,
 .btn-success {
   background: var(--credito);
@@ -485,6 +491,51 @@ a {
 .table th.table-actions,
 .table td.table-actions {
   width: 1%;
+  white-space: nowrap;
+}
+
+/* ---------- Paginacao ---------- */
+
+/*
+ * Fecha a tabela como o rodape de um extrato: regua fina em cima, contagem a
+ * esquerda na mono maiuscula dos rotulos, navegacao a direita.
+ *
+ * O flex-wrap dispensa breakpoint: quando nao cabem lado a lado, contagem e
+ * controles caem em linhas separadas sozinhos.
+ */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pauta);
+}
+
+.paginacao-contagem {
+  margin: 0;
+  font-family: var(--cifra);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.paginacao-controles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.paginacao-posicao {
+  font-family: var(--cifra);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--tinta-suave);
   white-space: nowrap;
 }
 
