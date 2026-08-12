@@ -283,9 +283,12 @@ a {
 
 /* ---------- Formularios ---------- */
 
+/* Descrição, Valor, Data, Tipo, Pessoa, Categoria, Salvar, Cancelar — só o
+   form de Transações usa a variante sem classe (Pessoas/Categorias usam as
+   variantes abaixo, com menos campos). */
 .form-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1.2fr auto auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.2fr auto auto;
   gap: 12px;
   align-items: center;
 }

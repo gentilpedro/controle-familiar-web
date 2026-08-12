@@ -5,7 +5,7 @@ import type { Transacao } from "../types/Transacao";
 import type { Categoria } from "../types/Categoria";
 import type { Pessoa } from "../types/Pessoa";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { useApiResource } from "../hooks/useApiResource";
 import { mensagemDeErro } from "../utils/erro";
 
@@ -14,6 +14,17 @@ import { mensagemDeErro } from "../utils/erro";
 // sem tradução.
 const FINALIDADE_AMBAS = 3;
 
+// "AAAA-MM-DD" no fuso local — o valor que <input type="date"> espera. Não
+// usa toISOString() puro: ele converte pra UTC primeiro, e perto da meia-noite
+// isso pode voltar o dia errado dependendo do fuso de quem está usando.
+function hojeLocalISO(): string {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 export default function Transacoes() {
   const { dados: transacoes, carregando, erro, recarregar } = useApiResource<Transacao>("/transacoes");
   const { dados: pessoas } = useApiResource<Pessoa>("/pessoas");
@@ -21,6 +32,7 @@ export default function Transacoes() {
 
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState<number>(0);
+  const [data, setData] = useState(hojeLocalISO());
   const [tipo, setTipo] = useState(1);
   const [pessoaId, setPessoaId] = useState<number | "">("");
   const [categoriaId, setCategoriaId] = useState<number | "">("");
@@ -57,12 +69,14 @@ export default function Transacoes() {
         descricao,
         valor,
         tipo,
+        data,
         pessoaId,
         categoriaId
       });
 
       setDescricao("");
       setValor(0);
+      setData(hojeLocalISO());
       setTipo(1);
       setPessoaId("");
       setCategoriaId("");
@@ -116,6 +130,15 @@ export default function Transacoes() {
               placeholder="Valor"
               value={valor}
               onChange={(e) => setValor(Number(e.target.value))}
+            />
+
+            <label className="sr-only" htmlFor="transacao-data">Data</label>
+            <input
+              id="transacao-data"
+              className="input"
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
             />
 
             {tipoHerdaDaCategoria ? (
@@ -195,6 +218,7 @@ export default function Transacoes() {
             <thead>
               <tr>
                 <th className="celula-id">ID</th>
+                <th className="celula-id">Data</th>
                 <th>Descrição</th>
                 <th className="celula-valor">Valor</th>
                 <th>Tipo</th>
@@ -205,16 +229,17 @@ export default function Transacoes() {
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan={6}>Carregando...</td>
+                  <td colSpan={7}>Carregando...</td>
                 </tr>
               ) : transacoes.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>Nenhuma transação cadastrada ainda.</td>
+                  <td colSpan={7}>Nenhuma transação cadastrada ainda.</td>
                 </tr>
               ) : (
                 transacoes.map((t) => (
                   <tr key={t.id}>
                     <td className="celula-id" data-rotulo="ID">{t.id}</td>
+                    <td className="celula-id" data-rotulo="Data">{formatDate(t.data)}</td>
                     <td data-rotulo="Descrição">{t.descricao}</td>
                     {/* Cor do valor segue o tipo, como num extrato: receita em
                         credito, despesa em debito. O badge ao lado mantem a
