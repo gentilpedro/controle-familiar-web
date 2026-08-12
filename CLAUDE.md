@@ -121,11 +121,12 @@ de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quand
 
 ## Transações recorrentes/parceladas (desde 2026-08-12)
 
-Compra parcelada em N meses e salário dividido por percentual em quinzenas. 8 PRs sequenciais nos
-dois repositórios (4 API + 4 front), cada um dependendo do anterior — nenhum ainda mergeado no
-momento em que isso foi escrito. Plano completo salvo em
-`C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md`. Os 4 blocos de API estão
-prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai o lado do front.
+Compra parcelada em N meses e salário dividido por percentual em quinzenas (Passos 1-4). 8 PRs
+sequenciais nos dois repositórios (4 API + 4 front), cada um dependendo do anterior. Plano original
+salvo em `C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md` — esse arquivo foi
+**sobrescrito depois** por um plano seguinte (status Pago/Recebido + Painel do Mês, Passos 5-6
+abaixo), então ele já não reflete mais o conteúdo desta primeira parte. Os 4 blocos de API dos
+Passos 1-4 estão prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai o lado do front.
 
 **Passo 1 — `Transacao.data`**: antes disso, transação não tinha data nenhuma. `types/Transacao.ts`
 ganha `data: string` (formato `DateOnly` da API, `"AAAA-MM-DD"`, sem hora). Primeiro `<input
@@ -213,6 +214,40 @@ efeito de verdade pela primeira vez.
   `finalidade === tipoParcelada || finalidade === FINALIDADE_AMBAS`, substituindo o filtro fixo
   "sempre despesa" do Passo 3. Trocar o Tipo limpa `categoriaIdParcelada`
   (`handleTipoParceladaChange`) — a categoria selecionada podia não existir mais na nova lista.
+
+**Passo 6 (fecha o bloco) — Painel do Mês** (`src/pages/PainelMensal.tsx`, novo, branch
+`painel-do-mes` sobre `pago-na-transacao`): tela separada do Dashboard (`Relatorio.tsx`), item de
+menu **sempre visível** em `Layout.tsx` (sem condição — diferente de "Relatório Familiar", que só
+faz sentido com mais de um membro; saldo mensal serve pra conta individual também).
+
+- Seletor `<input type="month">` no `page-header`, mesmo padrão do modal de Salário Quinzenal.
+  `mesAtualLocal()` é uma versão enxuta do `hojeLocalISO()` de `Transacoes.tsx` — só `"AAAA-MM"`,
+  montada dos getters locais direto (sem passar por string ISO), então não carrega o mesmo risco de
+  fuso que motivou aquele helper.
+- **Duas fontes de dado independentes**: `useApiResource<Transacao>("/transacoes?pagina=1&tamanhoPagina=200")`
+  busca uma janela larga uma vez só e filtra no cliente por `t.data.startsWith(mesSelecionado)` —
+  evita abrir mais uma frente de mudança de contrato em `GET /transacoes` (filtro de período por
+  query ficou fora de escopo). `GET /painel-mensal?ano=&mes=` é buscado à parte
+  (`buscarResumo`, `useCallback` com deps `[ano, mes]`, mesmo padrão do `recarregar` de
+  `useApiResource`) porque devolve um objeto agregado, não uma lista — `extrairLista` não serve
+  aqui.
+- **Cards** (`.summary-grid`/`.summary-card`, já existentes, reaproveitados do Dashboard): Receitas
+  confirmadas, Despesas confirmadas, Saldo, Pendências (a receber/a pagar lado a lado no mesmo
+  card). ⚠️ O Saldo do Dashboard é sempre neutro (`--tinta`, convenção de "fechamento de livro-caixa"
+  — ver `## Sistema visual` acima); aqui o saldo muda de cor pelo sinal (credito/debito), então a
+  cor vem de **inline `style`**, não de mais uma classe `.summary-value.*` — duas classes de mesma
+  especificidade (`.summary-value.saldo` × `.summary-value.receita/despesa`) empatariam por ordem no
+  arquivo, e a de `.saldo` (declarada depois) sempre venceria. A régua dupla continua vindo da classe
+  `saldo` normalmente, só a cor é sobrescrita.
+- **Toggle de Pago/Recebido da tabela é o mesmo padrão do Passo 5** (`alternarPago`, botão-badge
+  `.badge-btn`), duplicado aqui em vez de extraído pra um componente compartilhado — só duas telas
+  usam isso até agora, e aqui o toggle também precisa re-buscar o resumo (`Promise.all([recarregar(),
+  buscarResumo()])`), não só a lista.
+- **Botão "Fechar mês"** (`POST /painel-mensal/fechar { ano, mes }`) vira o texto "Mês fechado em
+  [data]" (sem botão) quando `resumo.mesFechado` — a API não permite fechar de novo (índice único
+  `(FamiliaId, Mes)`), então nem faz sentido oferecer a ação depois de fechado. Sem confirmação
+  modal: a ação já é deliberada (usuário escolhe o mês antes de clicar), e desfazer não existe nesta
+  versão (fora de escopo, mesma decisão da API).
 
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 

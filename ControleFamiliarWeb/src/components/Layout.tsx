@@ -47,6 +47,7 @@ export default function Layout() {
             <Link className="sidebar-link" to="/painel">Home</Link>
             <Link className="sidebar-link" to="/painel/categorias">Categorias</Link>
             <Link className="sidebar-link" to="/painel/transacoes">Transações</Link>
+            <Link className="sidebar-link" to="/painel/painel-mensal">Painel do Mês</Link>
             <Link className="sidebar-link" to="/painel/relatorios">Relatórios</Link>
             {/*
               Numa família de uma pessoa só, comparar "participação de cada
