@@ -9,10 +9,37 @@ Uma mudança de escopo focado = uma branch = um PR = um merge. Sempre verificar 
 `npm run build && npm run lint` **e `npx tsc --noEmit`** — `npm run build` roda só `vite build`, que
 transpila sem checar tipos, então sozinho ele deixa passar erro de tipagem.
 
+## Pessoa e Usuario: dois conceitos que se cruzam
+
+Desde 2026-08, `Registrar.tsx` pede **idade** (`RegistrarPayload.idade`) e a API cria a `Pessoa` do
+titular na mesma chamada — quem se cadastra já aparece na lista de Pessoas, sem precisar cadastrar a
+si mesmo à mão antes de lançar a primeira transação. Ver `AuthService.Registrar` no repositório da
+API.
+
+`Pessoa.ehMembro` diz se ela representa uma conta da família. Pessoa cadastrada à mão
+(`ehMembro: false`) é o cadastro de quem não tem login — um filho pequeno, por exemplo.
+
+**Não existe mais uma página `Pessoas` nem item `Pessoas` no menu** (desde 2026-08-12). O cadastro
+manual de dependente virou uma seção dentro de `MinhaFamilia.tsx`, junto da tabela de Membros —
+`souAdministrador` esconde tanto o formulário de criar quanto os botões de editar/excluir de cada
+linha, espelhando a API (`PessoaService` agora exige admin pra criar/editar/excluir pessoa manual;
+`GET /pessoas` continua aberto a qualquer membro). A tabela de Dependentes filtra
+`pessoas.filter(p => !p.ehMembro)` — a pessoa de um membro já aparece na tabela de Membros acima,
+listar de novo seria repetir a mesma informação.
+
+O atalho da Home que apontava pra `/painel/pessoas` agora vai pra `/painel/minha-familia`.
+
 ## Acesso: uso livre
 
 O app **não tem cobrança**. Toda conta autenticada acessa as rotas financeiras; o único controle é o
 `ProtectedRoute` (sessão válida). Não existe gate de assinatura, página de planos nem trial.
+
+## Categorias do sistema
+
+A lista de `/categorias` mistura as categorias da família com as **base do sistema** (Água, Luz,
+Mercado...), que não têm dono e aparecem para todo mundo. A API recusa editar ou excluir essas com
+403, então a tela usa o campo `ehDoSistema` do response para simplesmente não desenhar os botões de
+ação nelas — oferecer o botão e deixar a API negar depois é o comportamento a evitar.
 
 ## Assinatura via Stripe — revertida em 2026-08-11
 
@@ -57,7 +84,9 @@ Regras que sustentam o padrão:
 - Separação vem de régua fina (`--pauta`), não de sombra. O saldo leva régua dupla, a convenção de
   fechamento do livro-caixa.
 - ⚠️ `.btn-secondary` tem texto em `--tinta`; sobre a sidebar escura ele precisa da inversão que está
-  em `.sidebar-sair`. Botão novo dentro da sidebar exige o mesmo cuidado.
+  em `.btn.sidebar-sair`. O seletor leva as **duas** classes de propósito: as regras da sidebar vêm
+  antes de `.btn-secondary` no `app.css` e, com uma classe só, perderiam a cascata — foi assim que o
+  "Sair" ficou invisível. Botão novo dentro da sidebar exige o mesmo cuidado.
 
 A copy é de uso livre: pode dizer "grátis" e "sem cartão de crédito" sem ressalva, já que agora é
 verdade. Se a cobrança voltar, essa copy precisa voltar a ser qualificada.
@@ -84,6 +113,38 @@ Dois detalhes que o hook resolve e que reaparecem se alguém reescrever:
   recarregar sem sair da página 4 esconderia justamente o que o usuário acabou de cadastrar.
 - `carregando` sobe **no handler**, não dentro do efeito: o lint (`react-hooks/set-state-in-effect`)
   barra `setState` síncrono em efeito.
+
+## Tipo da transação vem da categoria (desde 2026-08-12)
+
+`Transacoes.tsx` não pergunta mais Receita/Despesa quando a categoria escolhida já decide isso
+sozinha (`Categoria.finalidade` 1 ou 2) — escolher a categoria já define o tipo, e o `<select>` de
+Tipo vira um badge somente-leitura. A pergunta manual só volta quando a categoria aceita as duas
+finalidades (`finalidade === 3`, "Ambas" — ex.: a categoria do sistema "Outros"). Antes disso dava
+pra escolher Tipo e Categoria incompatíveis (ex.: Despesa + categoria "Salário") e só descobrir no
+400 da API (`TransacaoService`, REGRA 2) depois de enviar.
+
+O catch do formulário passou a usar `mensagemDeErro` em vez de texto fixo — importa porque a regra
+de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quando a categoria é
+"Ambas", e antes essa explicação da API era descartada.
+
+## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
+
+Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)
+já mostra receita/despesa por pessoa num gráfico, mas não saldo individual nem participação
+percentual, e não tem o histórico de quem esteve na família.
+
+- **Saldo por pessoa e participação % não pediram nada novo da API.** `/relatorios/totais-por-pessoa`
+  já devolve `saldo` calculado por pessoa (`TotaisPessoaDto.Saldo` no backend); a % é só
+  `valor / total` calculado aqui na página.
+- **O histórico vem de `GET /familia/historico`**, endpoint novo — ver "Histórico da família" no
+  `CLAUDE.md` da API. Mapeamento de badge por ação fica local à página (`classeBadgeHistorico`), não
+  em `utils/badge.ts`: aquele arquivo só cobre o trio Receita/Despesa/Ambas, e as quatro ações do
+  histórico (`CriacaoFamilia`, `EntradaFamilia`, `RemocaoMembro`, `ExclusaoConta`) são um domínio
+  diferente, sem razão pra forçar as duas coisas no mesmo tipo.
+- **Item de menu só aparece com `familia.membros.length > 1`** (`Layout.tsx`) — numa família de uma
+  pessoa só, "participação de cada membro" não compara nada. A rota em si (`/painel/relatorio-familiar`)
+  continua acessível por URL direta mesmo sem o item no menu; sem membro pra comparar, a página só
+  mostra uma linha e um histórico curto, não quebra.
 
 ## CSS
 

@@ -7,11 +7,12 @@ import type { Pessoa } from "../types/Pessoa";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency } from "../utils/format";
 import { useApiResource } from "../hooks/useApiResource";
-import { useApiPaginado } from "../hooks/useApiPaginado";
-import Paginacao from "../components/Paginacao";
+import { mensagemDeErro } from "../utils/erro";
 
-// A API aceita até 200 por página; 20 mantém a tabela numa tela sem rolagem longa.
-const TAMANHO_PAGINA = 20;
+// Mesma numeração de TipoTransacao (1 Receita, 2 Despesa) usada por
+// Categoria.finalidade — é o que permite herdar o tipo direto da categoria
+// sem tradução.
+const FINALIDADE_AMBAS = 3;
 
 export default function Transacoes() {
   const {
@@ -39,6 +40,22 @@ export default function Transacoes() {
   const [erroAcao, setErroAcao] = useState("");
   const [sucesso, setSucesso] = useState("");
 
+  // A categoria já carrega se é Receita, Despesa ou Ambas — perguntar Tipo de
+  // novo quando ela já decide sozinha é pedir a mesma informação duas vezes
+  // (e abre brecha pra escolher uma combinação que a API rejeita). Só quando
+  // a categoria aceita as duas finalidades é que a escolha continua manual.
+  const categoriaSelecionada = categorias.find((c) => c.id === categoriaId);
+  const tipoHerdaDaCategoria = categoriaSelecionada != null && categoriaSelecionada.finalidade !== FINALIDADE_AMBAS;
+
+  function handleCategoriaChange(id: number) {
+    setCategoriaId(id);
+
+    const categoria = categorias.find((c) => c.id === id);
+    if (categoria && categoria.finalidade !== FINALIDADE_AMBAS) {
+      setTipo(categoria.finalidade);
+    }
+  }
+
   async function criarTransacao(e: React.FormEvent) {
     e.preventDefault();
 
@@ -64,8 +81,8 @@ export default function Transacoes() {
       setSucesso("Transação cadastrada com sucesso.");
 
       await recarregar();
-    } catch {
-      setErroAcao("Não foi possível cadastrar a transação.");
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }
@@ -112,16 +129,29 @@ export default function Transacoes() {
               onChange={(e) => setValor(Number(e.target.value))}
             />
 
-            <label className="sr-only" htmlFor="transacao-tipo">Tipo</label>
-            <select
-              id="transacao-tipo"
-              className="select"
-              value={tipo}
-              onChange={(e) => setTipo(Number(e.target.value))}
-            >
-              <option value={1}>Receita</option>
-              <option value={2}>Despesa</option>
-            </select>
+            {tipoHerdaDaCategoria ? (
+              // Mesma altura de .select (44px), pra não pular o layout ao
+              // trocar de categoria: só o conteúdo muda, o slot no grid não.
+              <span
+                className={classeBadge(textoTipoTransacao(tipo))}
+                style={{ height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+              >
+                {textoTipoTransacao(tipo)}
+              </span>
+            ) : (
+              <>
+                <label className="sr-only" htmlFor="transacao-tipo">Tipo</label>
+                <select
+                  id="transacao-tipo"
+                  className="select"
+                  value={tipo}
+                  onChange={(e) => setTipo(Number(e.target.value))}
+                >
+                  <option value={1}>Receita</option>
+                  <option value={2}>Despesa</option>
+                </select>
+              </>
+            )}
 
             <label className="sr-only" htmlFor="transacao-pessoa">Pessoa</label>
             <select
@@ -143,7 +173,7 @@ export default function Transacoes() {
               id="transacao-categoria"
               className="select"
               value={categoriaId}
-              onChange={(e) => setCategoriaId(Number(e.target.value))}
+              onChange={(e) => handleCategoriaChange(Number(e.target.value))}
             >
               <option value="">Selecionar Categoria</option>
               {categorias.map((c) => (
@@ -175,7 +205,7 @@ export default function Transacoes() {
           <table className="table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="celula-id">ID</th>
                 <th>Descrição</th>
                 <th className="celula-valor">Valor</th>
                 <th>Tipo</th>
@@ -200,12 +230,13 @@ export default function Transacoes() {
               ) : (
                 transacoes.map((t) => (
                   <tr key={t.id}>
-                    <td className="celula-id">{t.id}</td>
-                    <td>{t.descricao}</td>
+                    <td className="celula-id" data-rotulo="ID">{t.id}</td>
+                    <td data-rotulo="Descrição">{t.descricao}</td>
                     {/* Cor do valor segue o tipo, como num extrato: receita em
                         credito, despesa em debito. O badge ao lado mantem a
                         distincao legivel sem depender da cor. */}
                     <td
+                      data-rotulo="Valor"
                       className={
                         textoTipoTransacao(t.tipo) === "Receita"
                           ? "celula-valor credito"
@@ -214,13 +245,13 @@ export default function Transacoes() {
                     >
                       {formatCurrency(Number(t.valor))}
                     </td>
-                    <td>
+                    <td data-rotulo="Tipo">
                       <span className={classeBadge(textoTipoTransacao(t.tipo))}>
                         {textoTipoTransacao(t.tipo)}
                       </span>
                     </td>
-                    <td>{t.pessoa}</td>
-                    <td>{t.categoria}</td>
+                    <td data-rotulo="Pessoa">{t.pessoa}</td>
+                    <td data-rotulo="Categoria">{t.categoria}</td>
                   </tr>
                 ))
               )}
