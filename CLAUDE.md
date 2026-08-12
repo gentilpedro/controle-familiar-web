@@ -142,6 +142,22 @@ funcionando por essa mesma função, não precisa de outra.
 `.form-row` (só a variante sem classe, usada exclusivamente por `Transacoes.tsx`) ganhou uma coluna:
 `grid-template-columns` foi de 7 pra 8 tracks. Não mexe em `.form-row.pessoas`/`.form-row.categorias`.
 
+**Passo 2 — editar/excluir transação avulsa**: `Transacoes.tsx` ganhou ícones editar/excluir + dois
+`Modal`, mesmo padrão de `MinhaFamilia.tsx` (dependentes) e da antiga `Pessoas.tsx`.
+
+⚠️ **`TransacaoResponseDto` só trazia `Pessoa`/`Categoria` como nome (string)**, sem o id — achado ao
+desenhar o modal de editar: pré-selecionar a opção certa num formulário casando de volta pelo nome é
+frágil (duas pessoas ou categorias podem ter o mesmo nome, nada impede isso). A API ganhou
+`PessoaId`/`CategoriaId` na resposta (branch `transacao-response-inclui-ids`, mudança aditiva, sem
+depender de nenhum dos 4 blocos — pura correção de uma lacuna que só apareceu na hora de construir a
+tela). `types/Transacao.ts` reflete isso.
+
+`types/Transacao.ts` também ganhou `serieId`/`numeroParcela`/`totalParcelas` (nullable) — a API já os
+devolve desde o bloco 3, mesmo sem nenhum jeito de criar uma série pelo front ainda (isso é o Passo
+3/4). O modal de editar/excluir já vem com o checkbox "aplicar/excluir também as futuras"
+**condicional a `serieId != null`** — código pronto, mas inexercitável até o Passo 3 existir. Evita
+ter que voltar no modal depois.
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)

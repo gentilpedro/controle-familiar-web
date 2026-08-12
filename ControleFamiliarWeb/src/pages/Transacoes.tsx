@@ -8,6 +8,7 @@ import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency, formatDate } from "../utils/format";
 import { useApiResource } from "../hooks/useApiResource";
 import { mensagemDeErro } from "../utils/erro";
+import Modal from "../components/Modal";
 
 // Mesma numeração de TipoTransacao (1 Receita, 2 Despesa) usada por
 // Categoria.finalidade — é o que permite herdar o tipo direto da categoria
@@ -83,6 +84,104 @@ export default function Transacoes() {
       setMostrarForm(false);
       setSucesso("Transação cadastrada com sucesso.");
 
+      await recarregar();
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  // ---------- Editar / excluir ----------
+
+  const [editModal, setEditModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [transacaoAtual, setTransacaoAtual] = useState<Transacao | null>(null);
+
+  const [descricaoEdicao, setDescricaoEdicao] = useState("");
+  const [valorEdicao, setValorEdicao] = useState<number>(0);
+  const [dataEdicao, setDataEdicao] = useState("");
+  const [tipoEdicao, setTipoEdicao] = useState(1);
+  const [pessoaIdEdicao, setPessoaIdEdicao] = useState<number | "">("");
+  const [categoriaIdEdicao, setCategoriaIdEdicao] = useState<number | "">("");
+  // Só tem efeito quando a transação pertence a uma série (parcelamento ou
+  // divisão percentual) — a API ignora fora desse caso.
+  const [aplicarAFuturas, setAplicarAFuturas] = useState(false);
+  const [excluirFuturas, setExcluirFuturas] = useState(false);
+
+  const categoriaSelecionadaEdicao = categorias.find((c) => c.id === categoriaIdEdicao);
+  const tipoHerdaDaCategoriaEdicao =
+    categoriaSelecionadaEdicao != null && categoriaSelecionadaEdicao.finalidade !== FINALIDADE_AMBAS;
+
+  function handleCategoriaChangeEdicao(id: number) {
+    setCategoriaIdEdicao(id);
+
+    const categoria = categorias.find((c) => c.id === id);
+    if (categoria && categoria.finalidade !== FINALIDADE_AMBAS) {
+      setTipoEdicao(categoria.finalidade);
+    }
+  }
+
+  function abrirEditar(t: Transacao) {
+    setErroAcao("");
+    setSucesso("");
+    setTransacaoAtual(t);
+    setDescricaoEdicao(t.descricao);
+    setValorEdicao(t.valor);
+    setDataEdicao(t.data);
+    setTipoEdicao(t.tipo);
+    setPessoaIdEdicao(t.pessoaId);
+    setCategoriaIdEdicao(t.categoriaId);
+    setAplicarAFuturas(false);
+    setEditModal(true);
+  }
+
+  async function salvarEdicao() {
+    if (!transacaoAtual) return;
+
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
+
+    try {
+      await api.patch(`/transacoes/${transacaoAtual.id}`, {
+        descricao: descricaoEdicao,
+        valor: valorEdicao,
+        data: dataEdicao,
+        tipo: tipoEdicao,
+        pessoaId: pessoaIdEdicao,
+        categoriaId: categoriaIdEdicao,
+        aplicarAFuturas
+      });
+      setEditModal(false);
+      setSucesso("Transação atualizada com sucesso.");
+      await recarregar();
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function abrirDelete(t: Transacao) {
+    setErroAcao("");
+    setSucesso("");
+    setTransacaoAtual(t);
+    setExcluirFuturas(false);
+    setDeleteModal(true);
+  }
+
+  async function confirmarDelete() {
+    if (!transacaoAtual) return;
+
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
+
+    try {
+      await api.delete(`/transacoes/${transacaoAtual.id}?excluirFuturas=${excluirFuturas}`);
+      setDeleteModal(false);
+      setSucesso("Transação removida com sucesso.");
       await recarregar();
     } catch (e) {
       setErroAcao(mensagemDeErro(e));
@@ -224,16 +323,17 @@ export default function Transacoes() {
                 <th>Tipo</th>
                 <th>Pessoa</th>
                 <th>Categoria</th>
+                <th className="table-actions">Ações</th>
               </tr>
             </thead>
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan={7}>Carregando...</td>
+                  <td colSpan={8}>Carregando...</td>
                 </tr>
               ) : transacoes.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>Nenhuma transação cadastrada ainda.</td>
+                  <td colSpan={8}>Nenhuma transação cadastrada ainda.</td>
                 </tr>
               ) : (
                 transacoes.map((t) => (
@@ -261,12 +361,168 @@ export default function Transacoes() {
                     </td>
                     <td data-rotulo="Pessoa">{t.pessoa}</td>
                     <td data-rotulo="Categoria">{t.categoria}</td>
+                    <td className="table-actions" data-rotulo="Ações">
+                      <button
+                        className="btn btn-success icon-btn"
+                        aria-label="Editar transação"
+                        onClick={() => abrirEditar(t)}>
+                        ✏
+                      </button>
+
+                      <button
+                        className="btn btn-danger icon-btn"
+                        aria-label="Excluir transação"
+                        onClick={() => abrirDelete(t)}>
+                        🗑
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        <Modal
+          open={editModal}
+          title="Editar Transação"
+          onClose={() => setEditModal(false)}
+        >
+          <label className="sr-only" htmlFor="transacao-descricao-editar">Descrição</label>
+          <input
+            id="transacao-descricao-editar"
+            className="input"
+            placeholder="Descrição"
+            value={descricaoEdicao}
+            onChange={(e) => setDescricaoEdicao(e.target.value)}
+          />
+
+          <label className="sr-only" htmlFor="transacao-valor-editar">Valor</label>
+          <input
+            id="transacao-valor-editar"
+            className="input"
+            type="number"
+            placeholder="Valor"
+            value={valorEdicao}
+            onChange={(e) => setValorEdicao(Number(e.target.value))}
+          />
+
+          <label className="sr-only" htmlFor="transacao-data-editar">Data</label>
+          <input
+            id="transacao-data-editar"
+            className="input"
+            type="date"
+            value={dataEdicao}
+            onChange={(e) => setDataEdicao(e.target.value)}
+          />
+
+          {!tipoHerdaDaCategoriaEdicao && (
+            <>
+              <label className="sr-only" htmlFor="transacao-tipo-editar">Tipo</label>
+              <select
+                id="transacao-tipo-editar"
+                className="select"
+                value={tipoEdicao}
+                onChange={(e) => setTipoEdicao(Number(e.target.value))}
+              >
+                <option value={1}>Receita</option>
+                <option value={2}>Despesa</option>
+              </select>
+            </>
+          )}
+
+          <label className="sr-only" htmlFor="transacao-pessoa-editar">Pessoa</label>
+          <select
+            id="transacao-pessoa-editar"
+            className="select"
+            value={pessoaIdEdicao}
+            onChange={(e) => setPessoaIdEdicao(Number(e.target.value))}
+          >
+            {pessoas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="transacao-categoria-editar">Categoria</label>
+          <select
+            id="transacao-categoria-editar"
+            className="select"
+            value={categoriaIdEdicao}
+            onChange={(e) => handleCategoriaChangeEdicao(Number(e.target.value))}
+          >
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.descricao}
+              </option>
+            ))}
+          </select>
+
+          {/*
+            Só aparece quando a transação pertence a uma série — parcelamento
+            (bloco 7) ou divisão percentual (bloco 8). Sem série, a API
+            ignora o campo de qualquer forma, mas escondê-lo evita perguntar
+            algo que não faz sentido pra uma transação avulsa.
+          */}
+          {transacaoAtual?.serieId != null && (
+            <label className="auth-checkbox">
+              <input
+                type="checkbox"
+                checked={aplicarAFuturas}
+                onChange={(e) => setAplicarAFuturas(e.target.checked)}
+              />
+              Aplicar esta mudança também às ocorrências futuras desta série
+              {transacaoAtual.numeroParcela != null && transacaoAtual.totalParcelas != null && (
+                <> (parcela {transacaoAtual.numeroParcela}/{transacaoAtual.totalParcelas})</>
+              )}
+            </label>
+          )}
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
+
+          <button
+            className="btn btn-success"
+            onClick={salvarEdicao}
+            disabled={enviando}
+          >
+            {enviando ? "Salvando..." : "Salvar"}
+          </button>
+        </Modal>
+
+        <Modal
+          open={deleteModal}
+          title="Confirmar Exclusão"
+          onClose={() => setDeleteModal(false)}
+        >
+          <p>
+            Deseja realmente excluir <b>{transacaoAtual?.descricao}</b>?
+          </p>
+
+          {transacaoAtual?.serieId != null && (
+            <label className="auth-checkbox">
+              <input
+                type="checkbox"
+                checked={excluirFuturas}
+                onChange={(e) => setExcluirFuturas(e.target.checked)}
+              />
+              Excluir também as ocorrências futuras desta série
+              {transacaoAtual.numeroParcela != null && transacaoAtual.totalParcelas != null && (
+                <> (parcela {transacaoAtual.numeroParcela}/{transacaoAtual.totalParcelas})</>
+              )}
+            </label>
+          )}
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
+
+          <button
+            className="btn btn-danger"
+            onClick={confirmarDelete}
+            disabled={enviando}
+          >
+            {enviando ? "Excluindo..." : "Excluir"}
+          </button>
+        </Modal>
       </div>
     </>
   );
