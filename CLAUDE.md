@@ -9,6 +9,18 @@ Uma mudança de escopo focado = uma branch = um PR = um merge. Sempre verificar 
 `npm run build && npm run lint` **e `npx tsc --noEmit`** — `npm run build` roda só `vite build`, que
 transpila sem checar tipos, então sozinho ele deixa passar erro de tipagem.
 
+## Pessoa e Usuario: dois conceitos que se cruzam
+
+Desde 2026-08, `Registrar.tsx` pede **idade** (`RegistrarPayload.idade`) e a API cria a `Pessoa` do
+titular na mesma chamada — quem se cadastra já aparece na lista de Pessoas, sem precisar cadastrar a
+si mesmo à mão antes de lançar a primeira transação. Ver `AuthService.Registrar` no repositório da
+API.
+
+`Pessoa.ehMembro` diz se ela representa uma conta da família. Em `Pessoas.tsx`, isso vira o badge
+"Membro" e o botão de excluir some — a API recusa (400) apagar uma pessoa vinculada, então esconder
+poupa a viagem ao servidor para descobrir isso. Pessoa cadastrada à mão (`ehMembro: false`) continua
+funcionando como sempre: é o cadastro de quem não tem login, como um filho pequeno.
+
 ## Acesso: uso livre
 
 O app **não tem cobrança**. Toda conta autenticada acessa as rotas financeiras; o único controle é o

@@ -39,6 +39,7 @@ export interface RegistrarPayload {
   nome: string;
   email: string;
   senha: string;
+  idade: number;
   modoFamilia: "Nova" | "Entrar";
   nomeFamilia?: string;
   codigoConvite?: string;
