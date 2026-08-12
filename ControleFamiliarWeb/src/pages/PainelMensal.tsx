@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/api";
 
 import type { Transacao } from "../types/Transacao";
+import type { ApiEnvelope } from "../types/Auth";
 import type { ResumoMensal } from "../types/PainelMensal";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -41,8 +42,8 @@ export default function PainelMensal() {
     setResumoErro("");
 
     try {
-      const response = await api.get<ResumoMensal>("/painel-mensal", { params: { ano, mes } });
-      setResumo(response.data);
+      const response = await api.get<ApiEnvelope<ResumoMensal>>("/painel-mensal", { params: { ano, mes } });
+      setResumo(response.data.data!);
     } catch {
       setResumoErro("Não foi possível carregar o resumo do mês. Tente novamente.");
     }
