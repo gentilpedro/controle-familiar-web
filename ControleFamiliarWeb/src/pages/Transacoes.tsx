@@ -35,6 +35,7 @@ export default function Transacoes() {
   const [valor, setValor] = useState<number>(0);
   const [data, setData] = useState(hojeLocalISO());
   const [tipo, setTipo] = useState(1);
+  const [pago, setPago] = useState(true);
   const [pessoaId, setPessoaId] = useState<number | "">("");
   const [categoriaId, setCategoriaId] = useState<number | "">("");
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -71,6 +72,7 @@ export default function Transacoes() {
         valor,
         tipo,
         data,
+        pago,
         pessoaId,
         categoriaId
       });
@@ -79,6 +81,7 @@ export default function Transacoes() {
       setValor(0);
       setData(hojeLocalISO());
       setTipo(1);
+      setPago(true);
       setPessoaId("");
       setCategoriaId("");
       setMostrarForm(false);
@@ -102,6 +105,7 @@ export default function Transacoes() {
   const [valorEdicao, setValorEdicao] = useState<number>(0);
   const [dataEdicao, setDataEdicao] = useState("");
   const [tipoEdicao, setTipoEdicao] = useState(1);
+  const [pagoEdicao, setPagoEdicao] = useState(true);
   const [pessoaIdEdicao, setPessoaIdEdicao] = useState<number | "">("");
   const [categoriaIdEdicao, setCategoriaIdEdicao] = useState<number | "">("");
   // Só tem efeito quando a transação pertence a uma série (parcelamento ou
@@ -130,6 +134,7 @@ export default function Transacoes() {
     setValorEdicao(t.valor);
     setDataEdicao(t.data);
     setTipoEdicao(t.tipo);
+    setPagoEdicao(t.pago);
     setPessoaIdEdicao(t.pessoaId);
     setCategoriaIdEdicao(t.categoriaId);
     setAplicarAFuturas(false);
@@ -148,6 +153,7 @@ export default function Transacoes() {
         descricao: descricaoEdicao,
         valor: valorEdicao,
         data: dataEdicao,
+        pago: pagoEdicao,
         tipo: tipoEdicao,
         pessoaId: pessoaIdEdicao,
         categoriaId: categoriaIdEdicao,
@@ -160,6 +166,21 @@ export default function Transacoes() {
       setErroAcao(mensagemDeErro(e));
     } finally {
       setEnviando(false);
+    }
+  }
+
+  // Toggle direto na tabela — não abre modal, não mexe em mais nada da
+  // transação. PATCH /transacoes/{id}/pago existe justamente pra esse clique
+  // rápido não precisar carregar Pessoa/Categoria/Tipo de novo.
+  async function alternarPago(t: Transacao) {
+    setErroAcao("");
+    setSucesso("");
+
+    try {
+      await api.patch(`/transacoes/${t.id}/pago`, { pago: !t.pago });
+      await recarregar();
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
     }
   }
 
@@ -196,13 +217,17 @@ export default function Transacoes() {
   const [descricaoParcelada, setDescricaoParcelada] = useState("");
   const [valorTotalParcelada, setValorTotalParcelada] = useState<number>(0);
   const [numeroParcelas, setNumeroParcelas] = useState<number>(2);
+  const [tipoParcelada, setTipoParcelada] = useState(2);
   const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(hojeLocalISO());
   const [pessoaIdParcelada, setPessoaIdParcelada] = useState<number | "">("");
   const [categoriaIdParcelada, setCategoriaIdParcelada] = useState<number | "">("");
 
-  // Compra parcelada é sempre despesa — categoria de receita não faz sentido
-  // aqui, então o select nem oferece.
-  const categoriasDeDespesa = categorias.filter((c) => c.finalidade !== 1);
+  // Compra parcelada aceita Receita também (ex.: um recebimento a prazo
+  // dividido em meses) — o select de categoria segue o Tipo escolhido, do
+  // mesmo jeito que o formulário avulso segue a Categoria.
+  const categoriasDaParcelada = categorias.filter(
+    (c) => c.finalidade === tipoParcelada || c.finalidade === FINALIDADE_AMBAS
+  );
 
   // Dia 29/30/31 pode não existir em algum mês da série (fevereiro, meses de
   // 30 dias) — a API cai no último dia daquele mês em vez de recusar, mas o
@@ -216,10 +241,19 @@ export default function Transacoes() {
     setDescricaoParcelada("");
     setValorTotalParcelada(0);
     setNumeroParcelas(2);
+    setTipoParcelada(2);
     setDataPrimeiraParcela(hojeLocalISO());
     setPessoaIdParcelada("");
     setCategoriaIdParcelada("");
     setModalParcelada(true);
+  }
+
+  // Trocar o Tipo pode invalidar a categoria já escolhida (ex.: uma categoria
+  // só de Despesa some do select ao trocar pra Receita) — limpa pra não
+  // mandar um categoriaId que não bate mais com o tipo.
+  function handleTipoParceladaChange(novoTipo: number) {
+    setTipoParcelada(novoTipo);
+    setCategoriaIdParcelada("");
   }
 
   async function criarParcelada() {
@@ -232,7 +266,7 @@ export default function Transacoes() {
         descricao: descricaoParcelada,
         valorTotal: valorTotalParcelada,
         numeroParcelas,
-        tipo: 2, // Despesa
+        tipo: tipoParcelada,
         dataPrimeiraParcela,
         pessoaId: pessoaIdParcelada,
         categoriaId: categoriaIdParcelada
@@ -436,6 +470,19 @@ export default function Transacoes() {
               ))}
             </select>
 
+            {/* Coluna própria: .form-row tem exatamente 8 tracks (uma por
+                campo + os 2 botões), então um 9º item aqui empurraria o
+                Cancelar sozinho pra linha de baixo se não ocupasse a linha
+                inteira. */}
+            <label className="auth-checkbox" style={{ gridColumn: "1 / -1" }}>
+              <input
+                type="checkbox"
+                checked={pago}
+                onChange={(e) => setPago(e.target.checked)}
+              />
+              {tipo === 1 ? "Já recebido" : "Já pago"}
+            </label>
+
             <button className="btn btn-success" type="submit" disabled={enviando}>
               {enviando ? "Salvando..." : "Salvar"}
             </button>
@@ -463,6 +510,7 @@ export default function Transacoes() {
                 <th>Descrição</th>
                 <th className="celula-valor">Valor</th>
                 <th>Tipo</th>
+                <th>Status</th>
                 <th>Pessoa</th>
                 <th>Categoria</th>
                 <th className="table-actions">Ações</th>
@@ -471,11 +519,11 @@ export default function Transacoes() {
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan={8}>Carregando...</td>
+                  <td colSpan={9}>Carregando...</td>
                 </tr>
               ) : transacoes.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>Nenhuma transação cadastrada ainda.</td>
+                  <td colSpan={9}>Nenhuma transação cadastrada ainda.</td>
                 </tr>
               ) : (
                 transacoes.map((t) => (
@@ -507,6 +555,15 @@ export default function Transacoes() {
                       <span className={classeBadge(textoTipoTransacao(t.tipo))}>
                         {textoTipoTransacao(t.tipo)}
                       </span>
+                    </td>
+                    <td data-rotulo="Status">
+                      <button
+                        type="button"
+                        className={`badge badge-btn ${t.pago ? "badge-receita" : "badge-ambas"}`}
+                        onClick={() => alternarPago(t)}
+                      >
+                        {t.pago ? (textoTipoTransacao(t.tipo) === "Receita" ? "Recebido" : "Pago") : "Pendente"}
+                      </button>
                     </td>
                     <td data-rotulo="Pessoa">{t.pessoa}</td>
                     <td data-rotulo="Categoria">{t.categoria}</td>
@@ -607,6 +664,15 @@ export default function Transacoes() {
               </option>
             ))}
           </select>
+
+          <label className="auth-checkbox">
+            <input
+              type="checkbox"
+              checked={pagoEdicao}
+              onChange={(e) => setPagoEdicao(e.target.checked)}
+            />
+            {tipoEdicao === 1 ? "Já recebido" : "Já pago"}
+          </label>
 
           {/*
             Só aparece quando a transação pertence a uma série — parcelamento
@@ -724,6 +790,17 @@ export default function Transacoes() {
             </p>
           )}
 
+          <label className="sr-only" htmlFor="parcelada-tipo">Tipo</label>
+          <select
+            id="parcelada-tipo"
+            className="select"
+            value={tipoParcelada}
+            onChange={(e) => handleTipoParceladaChange(Number(e.target.value))}
+          >
+            <option value={1}>Receita</option>
+            <option value={2}>Despesa</option>
+          </select>
+
           <label className="sr-only" htmlFor="parcelada-pessoa">Pessoa</label>
           <select
             id="parcelada-pessoa"
@@ -747,7 +824,7 @@ export default function Transacoes() {
             onChange={(e) => setCategoriaIdParcelada(Number(e.target.value))}
           >
             <option value="">Selecionar Categoria</option>
-            {categoriasDeDespesa.map((c) => (
+            {categoriasDaParcelada.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.descricao}
               </option>

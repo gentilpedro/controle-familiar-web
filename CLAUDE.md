@@ -163,8 +163,8 @@ próprio (`POST /transacoes/parceladas`). Badge "N/M" aparece na Descrição de 
 `totalParcelas` — é aí que o checkbox "aplicar/excluir também as futuras" do Passo 2 passa a ter
 efeito de verdade pela primeira vez.
 
-- Tipo é sempre Despesa (`2`), fixo — não tem select de Tipo neste modal. Categoria filtra pra
-  `finalidade !== 1` (exclui Receita, mantém Despesa e Ambas).
+- Tipo era sempre Despesa (`2`), fixo, sem select — **destravado no Passo 5** (ver abaixo), que
+  também trocou o filtro de categoria de "sempre despesa" pra "conforme o Tipo escolhido".
 - **Aviso de dia 29/30/31**: `diaPodeFaltarEmAlgunsMeses` usa `getUTCDate()`, não `getDate()` — a
   mesma cautela de fuso horário do bug do `formatDate` (ver Passo 1). Como `dataPrimeiraParcela` é
   uma string `"AAAA-MM-DD"` sem hora, `new Date(...)` a interpreta como UTC; ler com `getDate()`
@@ -190,6 +190,29 @@ efeito de verdade pela primeira vez.
   próprio `Dia`), o `-01` é só pra virar uma string de data válida.
 - Percentuais **não precisam somar 100** — o formulário não valida isso, de propósito (mesma
   decisão do backend: adiantamento e saldo podem vir de bases diferentes).
+
+**Passo 5 — status Pago/Recebido** (bloco novo, plano `foamy-knitting-lightning.md`, branch
+`pago-na-transacao` sobre `salario-quinzenal`): `types/Transacao.ts` ganha `pago: boolean`.
+
+- **Toggle direto na tabela** (`alternarPago`): botão-badge (`.badge-btn`, classe nova em
+  `app.css`) que chama `PATCH /transacoes/{id}/pago` sem abrir modal — verde ("Pago"/"Recebido",
+  rótulo conforme `Tipo`) quando `pago`, âmbar ("Pendente") quando não. `.badge-btn` só reseta o
+  chrome nativo de `<button>` (fonte, cursor) pra herdar a aparência das classes `.badge-*`
+  existentes — a cor em si continua vindo de `badge-receita`/`badge-ambas`, reaproveitadas do badge
+  de Tipo em vez de inventar uma paleta nova pra status.
+- **Checkbox "Já pago"/"Já recebido"** (rótulo conforme `tipo`/`tipoEdicao`) no formulário de criar
+  avulsa e no modal de editar, default marcado (`true`) — reflete o caso comum de registrar algo que
+  já aconteceu. Vai junto no `POST /transacoes` e no `PATCH /transacoes/{id}`.
+  - ⚠️ No formulário de criar (`.form-row`, grid de 8 tracks fixas — ver Passo 1), o checkbox usa
+    `gridColumn: "1 / -1"` pra ocupar a linha inteira: é o 9º item do grid, e sem isso o botão
+    Cancelar (auto-posicionado) cairia sozinho numa segunda linha.
+- Séries (parcelas, ocorrências de salário) continuam nascendo com `Pago = false` no backend — não
+  ganham campo novo nos modais de Compra Parcelada/Salário, é comportamento implícito da API.
+- **Compra Parcelada passa a aceitar Receita**: select de Tipo novo no modal (`tipoParcelada`,
+  default `2`/Despesa pra não mudar o caso comum). `categoriasDaParcelada` filtra por
+  `finalidade === tipoParcelada || finalidade === FINALIDADE_AMBAS`, substituindo o filtro fixo
+  "sempre despesa" do Passo 3. Trocar o Tipo limpa `categoriaIdParcelada`
+  (`handleTipoParceladaChange`) — a categoria selecionada podia não existir mais na nova lista.
 
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
