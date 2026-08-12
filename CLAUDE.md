@@ -119,13 +119,13 @@ O catch do formulário passou a usar `mensagemDeErro` em vez de texto fixo — i
 de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quando a categoria é
 "Ambas", e antes essa explicação da API era descartada.
 
-## Transações recorrentes/parceladas (em construção, desde 2026-08-12)
+## Transações recorrentes/parceladas (desde 2026-08-12)
 
-Bloco grande, em vários PRs sequenciais nos dois repositórios — compra parcelada em N meses e
-salário dividido por percentual em quinzenas. Plano completo salvo em
-`C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md` no momento em que isso foi
-escrito. Os 4 blocos de API já estão prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai
-o lado do front, também em blocos sequenciais.
+Compra parcelada em N meses e salário dividido por percentual em quinzenas. 8 PRs sequenciais nos
+dois repositórios (4 API + 4 front), cada um dependendo do anterior — nenhum ainda mergeado no
+momento em que isso foi escrito. Plano completo salvo em
+`C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md`. Os 4 blocos de API estão
+prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai o lado do front.
 
 **Passo 1 — `Transacao.data`**: antes disso, transação não tinha data nenhuma. `types/Transacao.ts`
 ganha `data: string` (formato `DateOnly` da API, `"AAAA-MM-DD"`, sem hora). Primeiro `<input
@@ -169,6 +169,27 @@ efeito de verdade pela primeira vez.
   mesma cautela de fuso horário do bug do `formatDate` (ver Passo 1). Como `dataPrimeiraParcela` é
   uma string `"AAAA-MM-DD"` sem hora, `new Date(...)` a interpreta como UTC; ler com `getDate()`
   (hora local) podia devolver o dia errado perto da meia-noite em fuso atrás de UTC.
+
+**Passo 4 (final) — salário quinzenal**: botão "Novo Salário", modal próprio (`POST
+/transacoes/recorrencia-percentual`). Fecha o bloco de transações recorrentes/parceladas.
+
+- `types/Categoria.ts` ganhou `aceitaDivisaoPercentual`. O front acha a categoria certa por
+  `categorias.find(c => c.aceitaDivisaoPercentual)` — **nunca por nome** ("Salário"), mesmo
+  raciocínio do backend. O botão "Novo Salário" só aparece se essa categoria existir; hoje é sempre
+  a categoria de sistema seedada, mas some em vez de quebrar se um dia não existir.
+- Sem select de Categoria no modal — só existe uma categoria com o flag, então o formulário nem
+  pergunta. Escondida, não em `[Required]` disfarçado: se um dia mais de uma categoria tiver o
+  flag, `categoriaSalario` pega a primeira encontrada, o que pode não ser a certa — não é um caso
+  tratado, porque hoje é estruturalmente impossível (só o seed do sistema marca o flag).
+- Formulário sempre pede **duas** ocorrências (dia + percentual cada), não uma lista dinâmica — a
+  API aceita qualquer tamanho ≥ 2, mas o único caso de uso descrito até aqui é sempre duas partes
+  ("35% na primeira quinzena, 75% no fim da segunda"). Dividir em mais de duas partes exigiria
+  reabrir esta tela mais tarde.
+- `mesReferencia` vem de `<input type="month">` (valor `"AAAA-MM"`) e vira `"AAAA-MM-01"` só na
+  hora de montar o corpo da requisição — a API ignora o dia desse campo (cada ocorrência tem o
+  próprio `Dia`), o `-01` é só pra virar uma string de data válida.
+- Percentuais **não precisam somar 100** — o formulário não valida isso, de propósito (mesma
+  decisão do backend: adiantamento e saldo podem vir de bases diferentes).
 
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
