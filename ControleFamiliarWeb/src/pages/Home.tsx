@@ -21,10 +21,10 @@ export default function Home() {
       {/* ATALHOS */}
       <div className="summary-grid">
 
-        <Link to="/painel/pessoas" className="summary-card">
+        <Link to="/painel/minha-familia" className="summary-card">
 
           <div className="summary-label">
-            Pessoas
+            Minha Família
           </div>
 
           <div className="summary-value saldo">

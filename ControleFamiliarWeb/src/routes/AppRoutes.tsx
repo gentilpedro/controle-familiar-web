@@ -7,7 +7,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import RotaNaoEncontrada from "./RotaNaoEncontrada";
 
 const Home = lazy(() => import("../pages/Home"));
-const Pessoas = lazy(() => import("../pages/Pessoas"));
 const Categorias = lazy(() => import("../pages/Categorias"));
 const Transacoes = lazy(() => import("../pages/Transacoes"));
 const Relatorios = lazy(() => import("../pages/Relatorio"));
@@ -41,7 +40,6 @@ export default function AppRoutes() {
               }
             >
               <Route index element={<Home />} />
-              <Route path="pessoas" element={<Pessoas />} />
               <Route path="categorias" element={<Categorias />} />
               <Route path="transacoes" element={<Transacoes />} />
               <Route path="relatorios" element={<Relatorios />} />
