@@ -3,6 +3,7 @@ import { api } from "../api/api";
 import type { Pessoa } from "../types/Pessoa";
 import Modal from "../components/Modal";
 import { useApiResource } from "../hooks/useApiResource";
+import { mensagemDeErro } from "../utils/erro";
 
 export default function Pessoas() {
   const { dados: pessoas, carregando, erro, recarregar } = useApiResource<Pessoa>("/pessoas");
@@ -103,8 +104,11 @@ export default function Pessoas() {
       setDeleteModal(false);
       setSucesso("Pessoa removida com sucesso.");
       await recarregar();
-    } catch {
-      setErroAcao("Não foi possível remover a pessoa.");
+    } catch (erro) {
+      // A API recusa (400) excluir pessoa vinculada a um membro, com a
+      // explicação pronta na mensagem — por isso mensagemDeErro aqui, não um
+      // texto fixo genérico.
+      setErroAcao(mensagemDeErro(erro));
     } finally {
       setEnviando(false);
     }
@@ -204,7 +208,10 @@ export default function Pessoas() {
                 pessoas.map((p) => (
                   <tr key={p.id}>
                     <td className="celula-id">{p.id}</td>
-                    <td>{p.nome}</td>
+                    <td>
+                      {p.nome}
+                      {p.ehMembro && <span className="badge badge-ambas" style={{ marginLeft: 8 }}>Membro</span>}
+                    </td>
                     <td>{p.idade} anos</td>
                     <td className="table-actions">
                       <button
@@ -214,12 +221,19 @@ export default function Pessoas() {
                         ✏
                       </button>
 
-                      <button
-                        className="btn btn-danger icon-btn"
-                        aria-label="Excluir pessoa"
-                        onClick={() => abrirDelete(p)}>
-                        🗑
-                      </button>
+                      {/*
+                        Pessoa de um membro só sai pela tela de Minha Família —
+                        a API recusa (400) excluir por aqui. Esconder o botão
+                        poupa a viagem ao servidor para descobrir isso.
+                      */}
+                      {!p.ehMembro && (
+                        <button
+                          className="btn btn-danger icon-btn"
+                          aria-label="Excluir pessoa"
+                          onClick={() => abrirDelete(p)}>
+                          🗑
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

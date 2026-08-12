@@ -15,6 +15,7 @@ export default function Registrar() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [idade, setIdade] = useState("");
   const [nomeFamilia, setNomeFamilia] = useState("");
   const [codigoConvite, setCodigoConvite] = useState(codigoDaUrl);
   const [aceitouPrivacidade, setAceitouPrivacidade] = useState(false);
@@ -32,6 +33,7 @@ export default function Registrar() {
         nome,
         email,
         senha,
+        idade: Number(idade),
         modoFamilia,
         nomeFamilia: modoFamilia === "Nova" ? nomeFamilia : undefined,
         codigoConvite: modoFamilia === "Entrar" ? codigoConvite : undefined
@@ -107,6 +109,25 @@ export default function Registrar() {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             minLength={8}
+            required
+          />
+
+          {/*
+            Vira a Pessoa do titular no cadastro (ver AuthService.Registrar na
+            API) — é o que faz a regra de "menor de 18 não lança receita" valer
+            desde o primeiro lançamento, sem passo manual depois.
+          */}
+          <label className="sr-only" htmlFor="registrar-idade">Sua idade</label>
+          <input
+            id="registrar-idade"
+            className="input"
+            type="number"
+            placeholder="Sua idade"
+            autoComplete="off"
+            value={idade}
+            onChange={(e) => setIdade(e.target.value)}
+            min={0}
+            max={120}
             required
           />
 
