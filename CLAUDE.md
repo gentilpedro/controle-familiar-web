@@ -127,6 +127,136 @@ O catch do formulário passou a usar `mensagemDeErro` em vez de texto fixo — i
 de menor de idade (REGRA 1: menor não lança receita) ainda pode disparar quando a categoria é
 "Ambas", e antes essa explicação da API era descartada.
 
+## Transações recorrentes/parceladas (desde 2026-08-12)
+
+Compra parcelada em N meses e salário dividido por percentual em quinzenas (Passos 1-4). 8 PRs
+sequenciais nos dois repositórios (4 API + 4 front), cada um dependendo do anterior. Plano original
+salvo em `C:\Users\pedro.rodrigues\.claude\plans\foamy-knitting-lightning.md` — esse arquivo foi
+**sobrescrito depois** por um plano seguinte (status Pago/Recebido + Painel do Mês, Passos 5-6
+abaixo), então ele já não reflete mais o conteúdo desta primeira parte. Os 4 blocos de API dos
+Passos 1-4 estão prontos (ver `CLAUDE.md` do `controle-familiar-api`); aqui vai o lado do front.
+
+**Passo 1 — `Transacao.data`**: antes disso, transação não tinha data nenhuma. `types/Transacao.ts`
+ganha `data: string` (formato `DateOnly` da API, `"AAAA-MM-DD"`, sem hora). Primeiro `<input
+type="date">` do projeto — não existia padrão anterior pra copiar.
+
+⚠️ **`formatDate` tratava só datetime completo** (`RelatorioFamiliar.criadoEm`, com hora) — `new
+Date("2026-08-15")` sem componente de hora é interpretado como **meia-noite UTC**, e num fuso atrás
+de UTC (Brasil, UTC-3) isso volta um dia na exibição. Achado ao ligar a coluna Data em
+`Transacoes.tsx`. `formatDate` agora detecta string `"AAAA-MM-DD"` pura (regex) e monta o `Date` a
+partir dos componentes locais (`new Date(ano, mes-1, dia)`), sem passar pelo parser — datetime
+completo continua pelo caminho antigo. Endpoint novo que devolva uma data sem hora deve continuar
+funcionando por essa mesma função, não precisa de outra.
+
+`.form-row` (só a variante sem classe, usada exclusivamente por `Transacoes.tsx`) ganhou uma coluna:
+`grid-template-columns` foi de 7 pra 8 tracks. Não mexe em `.form-row.pessoas`/`.form-row.categorias`.
+
+**Passo 2 — editar/excluir transação avulsa**: `Transacoes.tsx` ganhou ícones editar/excluir + dois
+`Modal`, mesmo padrão de `MinhaFamilia.tsx` (dependentes) e da antiga `Pessoas.tsx`.
+
+⚠️ **`TransacaoResponseDto` só trazia `Pessoa`/`Categoria` como nome (string)**, sem o id — achado ao
+desenhar o modal de editar: pré-selecionar a opção certa num formulário casando de volta pelo nome é
+frágil (duas pessoas ou categorias podem ter o mesmo nome, nada impede isso). A API ganhou
+`PessoaId`/`CategoriaId` na resposta (branch `transacao-response-inclui-ids`, mudança aditiva, sem
+depender de nenhum dos 4 blocos — pura correção de uma lacuna que só apareceu na hora de construir a
+tela). `types/Transacao.ts` reflete isso.
+
+`types/Transacao.ts` também ganhou `serieId`/`numeroParcela`/`totalParcelas` (nullable) — a API já os
+devolve desde o bloco 3, mesmo sem nenhum jeito de criar uma série pelo front ainda (isso é o Passo
+3/4). O modal de editar/excluir já vem com o checkbox "aplicar/excluir também as futuras"
+**condicional a `serieId != null`** — código pronto, mas inexercitável até o Passo 3 existir. Evita
+ter que voltar no modal depois.
+
+**Passo 3 — compra parcelada**: botão "Nova Compra Parcelada" ao lado de "Nova Transação", modal
+próprio (`POST /transacoes/parceladas`). Badge "N/M" aparece na Descrição de toda linha com
+`totalParcelas` — é aí que o checkbox "aplicar/excluir também as futuras" do Passo 2 passa a ter
+efeito de verdade pela primeira vez.
+
+- Tipo era sempre Despesa (`2`), fixo, sem select — **destravado no Passo 5** (ver abaixo), que
+  também trocou o filtro de categoria de "sempre despesa" pra "conforme o Tipo escolhido".
+- **Aviso de dia 29/30/31**: `diaPodeFaltarEmAlgunsMeses` usa `getUTCDate()`, não `getDate()` — a
+  mesma cautela de fuso horário do bug do `formatDate` (ver Passo 1). Como `dataPrimeiraParcela` é
+  uma string `"AAAA-MM-DD"` sem hora, `new Date(...)` a interpreta como UTC; ler com `getDate()`
+  (hora local) podia devolver o dia errado perto da meia-noite em fuso atrás de UTC.
+
+**Passo 4 (final) — salário quinzenal**: botão "Novo Salário", modal próprio (`POST
+/transacoes/recorrencia-percentual`). Fecha o bloco de transações recorrentes/parceladas.
+
+- `types/Categoria.ts` ganhou `aceitaDivisaoPercentual`. O front acha a categoria certa por
+  `categorias.find(c => c.aceitaDivisaoPercentual)` — **nunca por nome** ("Salário"), mesmo
+  raciocínio do backend. O botão "Novo Salário" só aparece se essa categoria existir; hoje é sempre
+  a categoria de sistema seedada, mas some em vez de quebrar se um dia não existir.
+- Sem select de Categoria no modal — só existe uma categoria com o flag, então o formulário nem
+  pergunta. Escondida, não em `[Required]` disfarçado: se um dia mais de uma categoria tiver o
+  flag, `categoriaSalario` pega a primeira encontrada, o que pode não ser a certa — não é um caso
+  tratado, porque hoje é estruturalmente impossível (só o seed do sistema marca o flag).
+- Formulário sempre pede **duas** ocorrências (dia + percentual cada), não uma lista dinâmica — a
+  API aceita qualquer tamanho ≥ 2, mas o único caso de uso descrito até aqui é sempre duas partes
+  ("35% na primeira quinzena, 75% no fim da segunda"). Dividir em mais de duas partes exigiria
+  reabrir esta tela mais tarde.
+- `mesReferencia` vem de `<input type="month">` (valor `"AAAA-MM"`) e vira `"AAAA-MM-01"` só na
+  hora de montar o corpo da requisição — a API ignora o dia desse campo (cada ocorrência tem o
+  próprio `Dia`), o `-01` é só pra virar uma string de data válida.
+- Percentuais **não precisam somar 100** — o formulário não valida isso, de propósito (mesma
+  decisão do backend: adiantamento e saldo podem vir de bases diferentes).
+
+**Passo 5 — status Pago/Recebido** (bloco novo, plano `foamy-knitting-lightning.md`, branch
+`pago-na-transacao` sobre `salario-quinzenal`): `types/Transacao.ts` ganha `pago: boolean`.
+
+- **Toggle direto na tabela** (`alternarPago`): botão-badge (`.badge-btn`, classe nova em
+  `app.css`) que chama `PATCH /transacoes/{id}/pago` sem abrir modal — verde ("Pago"/"Recebido",
+  rótulo conforme `Tipo`) quando `pago`, âmbar ("Pendente") quando não. `.badge-btn` só reseta o
+  chrome nativo de `<button>` (fonte, cursor) pra herdar a aparência das classes `.badge-*`
+  existentes — a cor em si continua vindo de `badge-receita`/`badge-ambas`, reaproveitadas do badge
+  de Tipo em vez de inventar uma paleta nova pra status.
+- **Checkbox "Já pago"/"Já recebido"** (rótulo conforme `tipo`/`tipoEdicao`) no formulário de criar
+  avulsa e no modal de editar, default marcado (`true`) — reflete o caso comum de registrar algo que
+  já aconteceu. Vai junto no `POST /transacoes` e no `PATCH /transacoes/{id}`.
+  - ⚠️ No formulário de criar (`.form-row`, grid de 8 tracks fixas — ver Passo 1), o checkbox usa
+    `gridColumn: "1 / -1"` pra ocupar a linha inteira: é o 9º item do grid, e sem isso o botão
+    Cancelar (auto-posicionado) cairia sozinho numa segunda linha.
+- Séries (parcelas, ocorrências de salário) continuam nascendo com `Pago = false` no backend — não
+  ganham campo novo nos modais de Compra Parcelada/Salário, é comportamento implícito da API.
+- **Compra Parcelada passa a aceitar Receita**: select de Tipo novo no modal (`tipoParcelada`,
+  default `2`/Despesa pra não mudar o caso comum). `categoriasDaParcelada` filtra por
+  `finalidade === tipoParcelada || finalidade === FINALIDADE_AMBAS`, substituindo o filtro fixo
+  "sempre despesa" do Passo 3. Trocar o Tipo limpa `categoriaIdParcelada`
+  (`handleTipoParceladaChange`) — a categoria selecionada podia não existir mais na nova lista.
+
+**Passo 6 (fecha o bloco) — Painel do Mês** (`src/pages/PainelMensal.tsx`, novo, branch
+`painel-do-mes` sobre `pago-na-transacao`): tela separada do Dashboard (`Relatorio.tsx`), item de
+menu **sempre visível** em `Layout.tsx` (sem condição — diferente de "Relatório Familiar", que só
+faz sentido com mais de um membro; saldo mensal serve pra conta individual também).
+
+- Seletor `<input type="month">` no `page-header`, mesmo padrão do modal de Salário Quinzenal.
+  `mesAtualLocal()` é uma versão enxuta do `hojeLocalISO()` de `Transacoes.tsx` — só `"AAAA-MM"`,
+  montada dos getters locais direto (sem passar por string ISO), então não carrega o mesmo risco de
+  fuso que motivou aquele helper.
+- **Duas fontes de dado independentes**: `useApiResource<Transacao>("/transacoes?pagina=1&tamanhoPagina=200")`
+  busca uma janela larga uma vez só e filtra no cliente por `t.data.startsWith(mesSelecionado)` —
+  evita abrir mais uma frente de mudança de contrato em `GET /transacoes` (filtro de período por
+  query ficou fora de escopo). `GET /painel-mensal?ano=&mes=` é buscado à parte
+  (`buscarResumo`, `useCallback` com deps `[ano, mes]`, mesmo padrão do `recarregar` de
+  `useApiResource`) porque devolve um objeto agregado, não uma lista — `extrairLista` não serve
+  aqui.
+- **Cards** (`.summary-grid`/`.summary-card`, já existentes, reaproveitados do Dashboard): Receitas
+  confirmadas, Despesas confirmadas, Saldo, Pendências (a receber/a pagar lado a lado no mesmo
+  card). ⚠️ O Saldo do Dashboard é sempre neutro (`--tinta`, convenção de "fechamento de livro-caixa"
+  — ver `## Sistema visual` acima); aqui o saldo muda de cor pelo sinal (credito/debito), então a
+  cor vem de **inline `style`**, não de mais uma classe `.summary-value.*` — duas classes de mesma
+  especificidade (`.summary-value.saldo` × `.summary-value.receita/despesa`) empatariam por ordem no
+  arquivo, e a de `.saldo` (declarada depois) sempre venceria. A régua dupla continua vindo da classe
+  `saldo` normalmente, só a cor é sobrescrita.
+- **Toggle de Pago/Recebido da tabela é o mesmo padrão do Passo 5** (`alternarPago`, botão-badge
+  `.badge-btn`), duplicado aqui em vez de extraído pra um componente compartilhado — só duas telas
+  usam isso até agora, e aqui o toggle também precisa re-buscar o resumo (`Promise.all([recarregar(),
+  buscarResumo()])`), não só a lista.
+- **Botão "Fechar mês"** (`POST /painel-mensal/fechar { ano, mes }`) vira o texto "Mês fechado em
+  [data]" (sem botão) quando `resumo.mesFechado` — a API não permite fechar de novo (índice único
+  `(FamiliaId, Mes)`), então nem faz sentido oferecer a ação depois de fechado. Sem confirmação
+  modal: a ação já é deliberada (usuário escolhe o mês antes de clicar), e desfazer não existe nesta
+  versão (fora de escopo, mesma decisão da API).
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)

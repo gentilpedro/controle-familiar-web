@@ -283,9 +283,12 @@ a {
 
 /* ---------- Formularios ---------- */
 
+/* Descrição, Valor, Data, Tipo, Pessoa, Categoria, Salvar, Cancelar — só o
+   form de Transações usa a variante sem classe (Pessoas/Categorias usam as
+   variantes abaixo, com menos campos). */
 .form-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1.2fr auto auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.2fr auto auto;
   gap: 12px;
   align-items: center;
 }
@@ -572,6 +575,18 @@ a {
   background: rgba(138, 109, 31, 0.08);
   border-color: rgba(138, 109, 31, 0.3);
   color: var(--atencao);
+}
+
+/* Status Pago/Recebido clicável na tabela de transações: mesma pilula do
+   badge de tipo, só que como <button> — reseta o chrome nativo pra herdar
+   fonte/cor/borda da classe .badge em vez do estilo padrão do navegador. */
+.badge-btn {
+  font: inherit;
+  cursor: pointer;
+}
+
+.badge-btn:hover {
+  filter: brightness(0.95);
 }
 
 /* ---------- Totais ---------- */
