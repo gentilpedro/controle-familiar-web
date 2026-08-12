@@ -190,6 +190,63 @@ export default function Transacoes() {
     }
   }
 
+  // ---------- Compra parcelada ----------
+
+  const [modalParcelada, setModalParcelada] = useState(false);
+  const [descricaoParcelada, setDescricaoParcelada] = useState("");
+  const [valorTotalParcelada, setValorTotalParcelada] = useState<number>(0);
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(2);
+  const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(hojeLocalISO());
+  const [pessoaIdParcelada, setPessoaIdParcelada] = useState<number | "">("");
+  const [categoriaIdParcelada, setCategoriaIdParcelada] = useState<number | "">("");
+
+  // Compra parcelada é sempre despesa — categoria de receita não faz sentido
+  // aqui, então o select nem oferece.
+  const categoriasDeDespesa = categorias.filter((c) => c.finalidade !== 1);
+
+  // Dia 29/30/31 pode não existir em algum mês da série (fevereiro, meses de
+  // 30 dias) — a API cai no último dia daquele mês em vez de recusar, mas o
+  // aviso evita surpresa quando a parcela de fevereiro cair no 28 em vez do
+  // dia esperado.
+  const diaPodeFaltarEmAlgunsMeses = new Date(dataPrimeiraParcela).getUTCDate() >= 29;
+
+  function abrirModalParcelada() {
+    setErroAcao("");
+    setSucesso("");
+    setDescricaoParcelada("");
+    setValorTotalParcelada(0);
+    setNumeroParcelas(2);
+    setDataPrimeiraParcela(hojeLocalISO());
+    setPessoaIdParcelada("");
+    setCategoriaIdParcelada("");
+    setModalParcelada(true);
+  }
+
+  async function criarParcelada() {
+    setErroAcao("");
+    setSucesso("");
+    setEnviando(true);
+
+    try {
+      await api.post("/transacoes/parceladas", {
+        descricao: descricaoParcelada,
+        valorTotal: valorTotalParcelada,
+        numeroParcelas,
+        tipo: 2, // Despesa
+        dataPrimeiraParcela,
+        pessoaId: pessoaIdParcelada,
+        categoriaId: categoriaIdParcelada
+      });
+      setModalParcelada(false);
+      setSucesso("Compra parcelada cadastrada com sucesso.");
+      await recarregar();
+    } catch (e) {
+      setErroAcao(mensagemDeErro(e));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return (
     <>
       <div className="page-header">
@@ -198,12 +255,21 @@ export default function Transacoes() {
           <p className="page-subtitle">Cadastre e acompanhe todas as movimentações financeiras.</p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={() => setMostrarForm(!mostrarForm)}
-        >
-          {mostrarForm ? "Fechar" : "Nova Transação"}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            className="btn btn-secondary"
+            onClick={abrirModalParcelada}
+          >
+            Nova Compra Parcelada
+          </button>
+
+          <button
+            className="btn btn-primary"
+            onClick={() => setMostrarForm(!mostrarForm)}
+          >
+            {mostrarForm ? "Fechar" : "Nova Transação"}
+          </button>
+        </div>
       </div>
 
       {erroAcao && <div className="auth-error">{erroAcao}</div>}
@@ -340,7 +406,14 @@ export default function Transacoes() {
                   <tr key={t.id}>
                     <td className="celula-id" data-rotulo="ID">{t.id}</td>
                     <td className="celula-id" data-rotulo="Data">{formatDate(t.data)}</td>
-                    <td data-rotulo="Descrição">{t.descricao}</td>
+                    <td data-rotulo="Descrição">
+                      {t.descricao}
+                      {t.totalParcelas != null && (
+                        <span className="badge" style={{ marginLeft: 8 }}>
+                          {t.numeroParcela}/{t.totalParcelas}
+                        </span>
+                      )}
+                    </td>
                     {/* Cor do valor segue o tipo, como num extrato: receita em
                         credito, despesa em debito. O badge ao lado mantem a
                         distincao legivel sem depender da cor. */}
@@ -521,6 +594,98 @@ export default function Transacoes() {
             disabled={enviando}
           >
             {enviando ? "Excluindo..." : "Excluir"}
+          </button>
+        </Modal>
+
+        <Modal
+          open={modalParcelada}
+          title="Nova Compra Parcelada"
+          onClose={() => setModalParcelada(false)}
+        >
+          <label className="sr-only" htmlFor="parcelada-descricao">Descrição</label>
+          <input
+            id="parcelada-descricao"
+            className="input"
+            placeholder="Descrição (ex.: Notebook)"
+            value={descricaoParcelada}
+            onChange={(e) => setDescricaoParcelada(e.target.value)}
+          />
+
+          <label className="sr-only" htmlFor="parcelada-valor-total">Valor total</label>
+          <input
+            id="parcelada-valor-total"
+            className="input"
+            type="number"
+            placeholder="Valor total"
+            value={valorTotalParcelada}
+            onChange={(e) => setValorTotalParcelada(Number(e.target.value))}
+          />
+
+          <label className="sr-only" htmlFor="parcelada-numero-parcelas">Número de parcelas</label>
+          <input
+            id="parcelada-numero-parcelas"
+            className="input"
+            type="number"
+            min={2}
+            max={60}
+            placeholder="Número de parcelas"
+            value={numeroParcelas}
+            onChange={(e) => setNumeroParcelas(Number(e.target.value))}
+          />
+
+          <label className="sr-only" htmlFor="parcelada-data-primeira">Data da primeira parcela</label>
+          <input
+            id="parcelada-data-primeira"
+            className="input"
+            type="date"
+            value={dataPrimeiraParcela}
+            onChange={(e) => setDataPrimeiraParcela(e.target.value)}
+          />
+
+          {diaPodeFaltarEmAlgunsMeses && (
+            <p style={{ color: "var(--tinta-suave)", fontSize: 13, margin: 0 }}>
+              Alguns meses não têm esse dia — a parcela correspondente cai no último dia do mês.
+            </p>
+          )}
+
+          <label className="sr-only" htmlFor="parcelada-pessoa">Pessoa</label>
+          <select
+            id="parcelada-pessoa"
+            className="select"
+            value={pessoaIdParcelada}
+            onChange={(e) => setPessoaIdParcelada(Number(e.target.value))}
+          >
+            <option value="">Selecionar Pessoa</option>
+            {pessoas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="parcelada-categoria">Categoria</label>
+          <select
+            id="parcelada-categoria"
+            className="select"
+            value={categoriaIdParcelada}
+            onChange={(e) => setCategoriaIdParcelada(Number(e.target.value))}
+          >
+            <option value="">Selecionar Categoria</option>
+            {categoriasDeDespesa.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.descricao}
+              </option>
+            ))}
+          </select>
+
+          {erroAcao && <div className="auth-error">{erroAcao}</div>}
+
+          <button
+            className="btn btn-success"
+            onClick={criarParcelada}
+            disabled={enviando}
+          >
+            {enviando ? "Salvando..." : "Salvar"}
           </button>
         </Modal>
       </div>

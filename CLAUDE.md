@@ -158,6 +158,18 @@ devolve desde o bloco 3, mesmo sem nenhum jeito de criar uma série pelo front a
 **condicional a `serieId != null`** — código pronto, mas inexercitável até o Passo 3 existir. Evita
 ter que voltar no modal depois.
 
+**Passo 3 — compra parcelada**: botão "Nova Compra Parcelada" ao lado de "Nova Transação", modal
+próprio (`POST /transacoes/parceladas`). Badge "N/M" aparece na Descrição de toda linha com
+`totalParcelas` — é aí que o checkbox "aplicar/excluir também as futuras" do Passo 2 passa a ter
+efeito de verdade pela primeira vez.
+
+- Tipo é sempre Despesa (`2`), fixo — não tem select de Tipo neste modal. Categoria filtra pra
+  `finalidade !== 1` (exclui Receita, mantém Despesa e Ambas).
+- **Aviso de dia 29/30/31**: `diaPodeFaltarEmAlgunsMeses` usa `getUTCDate()`, não `getDate()` — a
+  mesma cautela de fuso horário do bug do `formatDate` (ver Passo 1). Como `dataPrimeiraParcela` é
+  uma string `"AAAA-MM-DD"` sem hora, `new Date(...)` a interpreta como UTC; ler com `getDate()`
+  (hora local) podia devolver o dia errado perto da meia-noite em fuso atrás de UTC.
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)
