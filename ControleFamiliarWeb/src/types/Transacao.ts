@@ -9,9 +9,12 @@ export interface Transacao {
   pago: boolean;
   pessoa: string;
   categoria: string;
+  /** Null quando a transação não tem forma de pagamento — o campo é opcional. */
+  formaPagamento: string | null;
   /** Ids reais — casar de volta pelo nome pra pré-selecionar um formulário de edição seria frágil. */
   pessoaId: number;
   categoriaId: number;
+  formaPagamentoId: number | null;
   /** Presentes só quando a transação nasceu de um parcelamento ou de uma divisão percentual. */
   serieId: string | null;
   numeroParcela: number | null;

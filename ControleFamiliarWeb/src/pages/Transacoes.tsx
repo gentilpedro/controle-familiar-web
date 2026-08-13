@@ -3,6 +3,7 @@ import { api } from "../api/api";
 
 import type { Transacao } from "../types/Transacao";
 import type { Categoria } from "../types/Categoria";
+import type { FormaPagamento } from "../types/FormaPagamento";
 import type { Pessoa } from "../types/Pessoa";
 import { classeBadge, textoTipoTransacao } from "../utils/badge";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -31,7 +32,28 @@ function hojeLocalISO(): string {
   return `${ano}-${mes}-${dia}`;
 }
 
+// "AAAA-MM" no fuso local — o que <input type="month"> espera. Mesmo helper
+// do Painel do Mês, repetido aqui em vez de compartilhado: são duas linhas
+// que dependem só de Date, e cada tela usa o valor pra uma coisa diferente.
+function mesAtualLocal(): string {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  return `${ano}-${mes}`;
+}
+
 export default function Transacoes() {
+  // Abre no mês corrente: o histórico inteiro numa tela só polui a leitura, e
+  // o que se olha no dia a dia é o mês que está correndo. String vazia =
+  // "todos os meses", o escape pra procurar um lançamento antigo.
+  const [mesSelecionado, setMesSelecionado] = useState(mesAtualLocal());
+
+  // A API exige ano e mes juntos (ou nenhum dos dois) — undefined some da
+  // query string no useApiPaginado, então o filtro vazio vira "sem filtro".
+  const [anoFiltro, mesFiltro] = mesSelecionado
+    ? mesSelecionado.split("-").map(Number)
+    : [undefined, undefined];
+
   const {
     dados: transacoes,
     pagina,
@@ -41,11 +63,20 @@ export default function Transacoes() {
     erro,
     irPara,
     recarregar,
-  } = useApiPaginado<Transacao>("/transacoes", TAMANHO_PAGINA);
+  } = useApiPaginado<Transacao>("/transacoes", TAMANHO_PAGINA, { ano: anoFiltro, mes: mesFiltro });
 
-  // Pessoas e categorias alimentam os selects do formulário e vêm inteiras
+  // Trocar de mês precisa voltar pra página 1: a página 4 do mês passado pode
+  // nem existir no mês novo, e a tabela apareceria vazia sem explicação.
+  function handleMesChange(novoMes: string) {
+    setMesSelecionado(novoMes);
+    irPara(1);
+  }
+
+  // Pessoas, categorias e formas de pagamento alimentam os selects do
+  // formulário e vêm inteiras
   const { dados: pessoas } = useApiResource<Pessoa>("/pessoas");
   const { dados: categorias } = useApiResource<Categoria>("/categorias");
+  const { dados: formasPagamento } = useApiResource<FormaPagamento>("/formas-pagamento");
 
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState<number>(0);
@@ -54,6 +85,7 @@ export default function Transacoes() {
   const [pago, setPago] = useState(true);
   const [pessoaId, setPessoaId] = useState<number | "">("");
   const [categoriaId, setCategoriaId] = useState<number | "">("");
+  const [formaPagamentoId, setFormaPagamentoId] = useState<number | "">("");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erroAcao, setErroAcao] = useState("");
@@ -75,6 +107,16 @@ export default function Transacoes() {
     }
   }
 
+  // Um lançamento datado fora do mês filtrado não apareceria na tabela depois
+  // de salvo — o usuário veria "cadastrada com sucesso" e uma lista sem ela.
+  // Acompanhar a data do que acabou de ser criado evita o susto. Com o filtro
+  // desligado ("todos os meses") não há o que ajustar.
+  function irParaOMesDaData(dataISO: string) {
+    const mesDaData = dataISO.slice(0, 7);
+
+    if (mesSelecionado && mesSelecionado !== mesDaData) setMesSelecionado(mesDaData);
+  }
+
   async function criarTransacao(e: React.FormEvent) {
     e.preventDefault();
 
@@ -90,7 +132,9 @@ export default function Transacoes() {
         data,
         pago,
         pessoaId,
-        categoriaId
+        categoriaId,
+        // "" = nenhuma escolhida; a API trata o campo como opcional.
+        formaPagamentoId: formaPagamentoId === "" ? null : formaPagamentoId
       });
 
       setDescricao("");
@@ -100,9 +144,11 @@ export default function Transacoes() {
       setPago(true);
       setPessoaId("");
       setCategoriaId("");
+      setFormaPagamentoId("");
       setMostrarForm(false);
       setSucesso("Transação cadastrada com sucesso.");
 
+      irParaOMesDaData(data);
       await recarregar();
     } catch (e) {
       setErroAcao(mensagemDeErro(e));
@@ -124,6 +170,7 @@ export default function Transacoes() {
   const [pagoEdicao, setPagoEdicao] = useState(true);
   const [pessoaIdEdicao, setPessoaIdEdicao] = useState<number | "">("");
   const [categoriaIdEdicao, setCategoriaIdEdicao] = useState<number | "">("");
+  const [formaPagamentoIdEdicao, setFormaPagamentoIdEdicao] = useState<number | "">("");
   // Só tem efeito quando a transação pertence a uma série (parcelamento ou
   // divisão percentual) — a API ignora fora desse caso.
   const [aplicarAFuturas, setAplicarAFuturas] = useState(false);
@@ -153,6 +200,7 @@ export default function Transacoes() {
     setPagoEdicao(t.pago);
     setPessoaIdEdicao(t.pessoaId);
     setCategoriaIdEdicao(t.categoriaId);
+    setFormaPagamentoIdEdicao(t.formaPagamentoId ?? "");
     setAplicarAFuturas(false);
     setEditModal(true);
   }
@@ -173,10 +221,17 @@ export default function Transacoes() {
         tipo: tipoEdicao,
         pessoaId: pessoaIdEdicao,
         categoriaId: categoriaIdEdicao,
+        formaPagamentoId: formaPagamentoIdEdicao === "" ? null : formaPagamentoIdEdicao,
+        // Num PATCH parcial, "campo ausente" e "campo null" chegam iguais na
+        // API — é esta flag que diferencia "não mexi nisso" de "quero tirar a
+        // forma de pagamento".
+        removerFormaPagamento: formaPagamentoIdEdicao === "",
         aplicarAFuturas
       });
       setEditModal(false);
       setSucesso("Transação atualizada com sucesso.");
+
+      irParaOMesDaData(dataEdicao);
       await recarregar();
     } catch (e) {
       setErroAcao(mensagemDeErro(e));
@@ -237,6 +292,7 @@ export default function Transacoes() {
   const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(hojeLocalISO());
   const [pessoaIdParcelada, setPessoaIdParcelada] = useState<number | "">("");
   const [categoriaIdParcelada, setCategoriaIdParcelada] = useState<number | "">("");
+  const [formaPagamentoIdParcelada, setFormaPagamentoIdParcelada] = useState<number | "">("");
 
   // Compra parcelada aceita Receita também (ex.: um recebimento a prazo
   // dividido em meses) — o select de categoria segue o Tipo escolhido, do
@@ -261,6 +317,7 @@ export default function Transacoes() {
     setDataPrimeiraParcela(hojeLocalISO());
     setPessoaIdParcelada("");
     setCategoriaIdParcelada("");
+    setFormaPagamentoIdParcelada("");
     setModalParcelada(true);
   }
 
@@ -285,10 +342,15 @@ export default function Transacoes() {
         tipo: tipoParcelada,
         dataPrimeiraParcela,
         pessoaId: pessoaIdParcelada,
-        categoriaId: categoriaIdParcelada
+        categoriaId: categoriaIdParcelada,
+        formaPagamentoId: formaPagamentoIdParcelada === "" ? null : formaPagamentoIdParcelada
       });
       setModalParcelada(false);
       setSucesso("Compra parcelada cadastrada com sucesso.");
+
+      // As parcelas seguintes caem nos meses à frente; a primeira é a que dá
+      // pra mostrar agora sem trocar de mês por conta própria mais de uma vez.
+      irParaOMesDaData(dataPrimeiraParcela);
       await recarregar();
     } catch (e) {
       setErroAcao(mensagemDeErro(e));
@@ -305,7 +367,27 @@ export default function Transacoes() {
           <p className="page-subtitle">Cadastre e acompanhe todas as movimentações financeiras.</p>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <label className="sr-only" htmlFor="transacoes-mes">Mês</label>
+          <input
+            id="transacoes-mes"
+            className="input"
+            type="month"
+            style={{ width: "auto" }}
+            value={mesSelecionado}
+            onChange={(e) => handleMesChange(e.target.value)}
+          />
+
+          {/* Limpar o campo de mês é possível pelo teclado, mas nem todo
+              navegador mostra o botão de limpar — o atalho deixa "ver tudo"
+              e "voltar ao mês corrente" explícitos. */}
+          <button
+            className="btn btn-secondary"
+            onClick={() => handleMesChange(mesSelecionado ? "" : mesAtualLocal())}
+          >
+            {mesSelecionado ? "Ver todos os meses" : "Ver mês atual"}
+          </button>
+
           <button
             className="btn btn-secondary"
             onClick={abrirModalParcelada}
@@ -410,8 +492,23 @@ export default function Transacoes() {
               ))}
             </select>
 
-            {/* Coluna própria: .form-row tem exatamente 8 tracks (uma por
-                campo + os 2 botões), então um 9º item aqui empurraria o
+            <label className="sr-only" htmlFor="transacao-forma-pagamento">Forma de pagamento</label>
+            <select
+              id="transacao-forma-pagamento"
+              className="select"
+              value={formaPagamentoId}
+              onChange={(e) => setFormaPagamentoId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">Forma de pagamento</option>
+              {formasPagamento.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.descricao}
+                </option>
+              ))}
+            </select>
+
+            {/* Coluna própria: .form-row tem exatamente 9 tracks (uma por
+                campo + os 2 botões), então um 10º item aqui empurraria o
                 Cancelar sozinho pra linha de baixo se não ocupasse a linha
                 inteira. */}
             <label className="auth-checkbox" style={{ gridColumn: "1 / -1" }}>
@@ -453,6 +550,7 @@ export default function Transacoes() {
                 <th>Status</th>
                 <th>Pessoa</th>
                 <th>Categoria</th>
+                <th>Pagamento</th>
                 <th className="table-actions">Ações</th>
               </tr>
             </thead>
@@ -464,11 +562,15 @@ export default function Transacoes() {
               */}
               {carregando && transacoes.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>Carregando...</td>
+                  <td colSpan={10}>Carregando...</td>
                 </tr>
               ) : transacoes.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>Nenhuma transação cadastrada ainda.</td>
+                  <td colSpan={10}>
+                    {mesSelecionado
+                      ? "Nenhuma transação neste mês. Troque o mês ou veja todos os meses."
+                      : "Nenhuma transação cadastrada ainda."}
+                  </td>
                 </tr>
               ) : (
                 transacoes.map((t) => (
@@ -512,6 +614,9 @@ export default function Transacoes() {
                     </td>
                     <td data-rotulo="Pessoa">{t.pessoa}</td>
                     <td data-rotulo="Categoria">{t.categoria}</td>
+                    {/* Traço e não vazio: o campo é opcional, e a célula em
+                        branco parece dado faltando por erro. */}
+                    <td data-rotulo="Pagamento">{t.formaPagamento ?? "—"}</td>
                     <td className="table-actions" data-rotulo="Ações">
                       <button
                         className="btn btn-success icon-btn"
@@ -606,6 +711,21 @@ export default function Transacoes() {
             {categorias.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.descricao}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="transacao-forma-pagamento-editar">Forma de pagamento</label>
+          <select
+            id="transacao-forma-pagamento-editar"
+            className="select"
+            value={formaPagamentoIdEdicao}
+            onChange={(e) => setFormaPagamentoIdEdicao(e.target.value === "" ? "" : Number(e.target.value))}
+          >
+            <option value="">Sem forma de pagamento</option>
+            {formasPagamento.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.descricao}
               </option>
             ))}
           </select>
@@ -772,6 +892,21 @@ export default function Transacoes() {
             {categoriasDaParcelada.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.descricao}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="parcelada-forma-pagamento">Forma de pagamento</label>
+          <select
+            id="parcelada-forma-pagamento"
+            className="select"
+            value={formaPagamentoIdParcelada}
+            onChange={(e) => setFormaPagamentoIdParcelada(e.target.value === "" ? "" : Number(e.target.value))}
+          >
+            <option value="">Forma de pagamento (opcional)</option>
+            {formasPagamento.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.descricao}
               </option>
             ))}
           </select>
