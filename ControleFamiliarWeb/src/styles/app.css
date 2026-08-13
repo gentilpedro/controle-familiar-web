@@ -304,6 +304,13 @@ a {
   grid-template-columns: 2fr auto auto;
 }
 
+/* Cartão de crédito acrescenta fechamento, vencimento e categoria da fatura.
+   São duas configurações de grid porque os campos entram e saem da tela com
+   o checkbox — deixá-los sempre no grid empurraria os botões pro meio. */
+.form-row.formas-pagamento.cartao {
+  grid-template-columns: 2fr 1fr 1fr 1.4fr auto auto;
+}
+
 .input,
 .select {
   width: 100%;
@@ -855,7 +862,10 @@ a {
   .form-row,
   .form-row.pessoas,
   .form-row.categorias,
-  .form-row.formas-pagamento {
+  .form-row.formas-pagamento,
+  /* Precisa das três classes: `.formas-pagamento.cartao` (3 classes) tem
+     especificidade maior que `.formas-pagamento` e venceria aqui dentro. */
+  .form-row.formas-pagamento.cartao {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1042,7 +1052,8 @@ a {
   .form-row,
   .form-row.pessoas,
   .form-row.categorias,
-  .form-row.formas-pagamento {
+  .form-row.formas-pagamento,
+  .form-row.formas-pagamento.cartao {
     grid-template-columns: 1fr;
   }
 
