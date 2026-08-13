@@ -35,8 +35,18 @@ function extrairPagina<T>(corpo: unknown): Pagina<T> | null {
  *
  * Para endpoint que devolve a lista inteira (`/pessoas`, `/categorias`), use o
  * `useApiResource`. Hoje só `/transacoes` é paginado.
+ *
+ * `filtros` vira query string junto de `pagina`/`tamanhoPagina` — chave com
+ * valor `undefined` é omitida, então um filtro "sem valor" simplesmente não é
+ * enviado. Trocar um filtro **não** volta para a página 1 sozinho: quem mexeu
+ * no filtro chama `irPara(1)` no mesmo handler, porque só quem mudou o filtro
+ * sabe se a mudança invalida a posição atual.
  */
-export function useApiPaginado<T>(endpoint: string, tamanhoPagina: number) {
+export function useApiPaginado<T>(
+  endpoint: string,
+  tamanhoPagina: number,
+  filtros?: Record<string, string | number | undefined>
+) {
   const [pagina, setPagina] = useState(1);
   const [dados, setDados] = useState<T[]>([]);
   const [totalItens, setTotalItens] = useState(0);
@@ -51,11 +61,20 @@ export function useApiPaginado<T>(endpoint: string, tamanhoPagina: number) {
    */
   const [recarga, setRecarga] = useState(0);
 
+  /*
+   * Serializado porque o objeto de filtros é montado no corpo do componente:
+   * como literal, ele é uma referência nova a cada render e o efeito rodaria
+   * em loop. A string só muda quando algum valor muda de verdade.
+   */
+  const filtrosSerializados = JSON.stringify(filtros ?? {});
+
   useEffect(() => {
     let cancelado = false;
 
+    const params = { pagina, tamanhoPagina, ...(JSON.parse(filtrosSerializados) as object) };
+
     api
-      .get<unknown>(endpoint, { params: { pagina, tamanhoPagina } })
+      .get<unknown>(endpoint, { params })
       .then((response) => {
         if (cancelado) return;
 
@@ -81,7 +100,7 @@ export function useApiPaginado<T>(endpoint: string, tamanhoPagina: number) {
     return () => {
       cancelado = true;
     };
-  }, [endpoint, pagina, tamanhoPagina, recarga]);
+  }, [endpoint, pagina, tamanhoPagina, filtrosSerializados, recarga]);
 
   /*
    * `carregando` sobe aqui, no handler, e não dentro do efeito: o lint do

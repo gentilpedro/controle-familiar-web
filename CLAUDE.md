@@ -232,10 +232,9 @@ faz sentido com mais de um membro; saldo mensal serve pra conta individual tamb�
   `mesAtualLocal()` é uma versão enxuta do `hojeLocalISO()` de `Transacoes.tsx` — só `"AAAA-MM"`,
   montada dos getters locais direto (sem passar por string ISO), então não carrega o mesmo risco de
   fuso que motivou aquele helper.
-- **Duas fontes de dado independentes**: `useApiResource<Transacao>("/transacoes?pagina=1&tamanhoPagina=200")`
-  busca uma janela larga uma vez só e filtra no cliente por `t.data.startsWith(mesSelecionado)` —
-  evita abrir mais uma frente de mudança de contrato em `GET /transacoes` (filtro de período por
-  query ficou fora de escopo). `GET /painel-mensal?ano=&mes=` é buscado à parte
+- **Duas fontes de dado independentes**: a lista de transações do mês (que nesta rodada buscava uma
+  janela de 200 itens e filtrava no cliente — hoje usa `&ano=&mes=`, ver "Formas de pagamento e
+  filtro de mês" acima) e `GET /painel-mensal?ano=&mes=`, buscado à parte
   (`buscarResumo`, `useCallback` com deps `[ano, mes]`, mesmo padrão do `recarregar` de
   `useApiResource`) porque devolve um objeto agregado, não uma lista — `extrairLista` não serve
   aqui.
@@ -256,6 +255,53 @@ faz sentido com mais de um membro; saldo mensal serve pra conta individual tamb�
   `(FamiliaId, Mes)`), então nem faz sentido oferecer a ação depois de fechado. Sem confirmação
   modal: a ação já é deliberada (usuário escolhe o mês antes de clicar), e desfazer não existe nesta
   versão (fora de escopo, mesma decisão da API).
+
+## Formas de pagamento e filtro de mês (desde 2026-08-12)
+
+Dois pedidos que vieram juntos depois de usar a tela de Transações de verdade.
+
+**`src/pages/FormasPagamento.tsx`** (rota `/painel/formas-pagamento`, item de menu logo abaixo de
+Categorias) é o CRUD do catálogo novo da API — mesma estrutura de `Categorias.tsx`, com uma
+diferença: aqui tem **botão de excluir** além do de editar, e o `catch` usa `mensagemDeErro` em vez
+de texto fixo, porque a API recusa apagar forma já usada por alguma transação e essa explicação
+importa. `ehDoSistema` esconde os dois botões nas padrão (Pix/Dinheiro/Saque), mesmo padrão de
+Categorias: não oferecer o que a API vai negar com 403.
+
+`types/Transacao.ts` ganhou `formaPagamento: string | null` e `formaPagamentoId: number | null`. O
+select aparece nos três formulários (criar avulsa, editar, compra parcelada) e é **opcional** — a
+opção vazia é legítima, não um "selecione algo" disfarçado.
+
+- ⚠️ **No modal de editar, esvaziar o select manda `removerFormaPagamento: true`.** Num PATCH
+  parcial, campo ausente e campo null chegam iguais na API — sem essa flag dava pra trocar a forma
+  de pagamento, nunca pra tirá-la. Ver `TransacaoUpdateDto` no repositório da API.
+- `.form-row` foi de 8 pra **9 tracks** (o checkbox "Já pago" continua com `gridColumn: "1 / -1"`
+  pelo mesmo motivo do Passo 5). `.form-row.formas-pagamento` é uma variante nova de 3 tracks
+  (descrição + os dois botões), incluída nos dois media queries junto das outras.
+
+**Filtro de mês em Transações**: `<input type="month">` no `page-header`, **começando no mês
+corrente** — o histórico inteiro numa tela só era exatamente a poluição que motivou o pedido. String
+vazia = "todos os meses", e o botão ao lado alterna entre os dois estados (nem todo navegador
+mostra um botão de limpar no campo de mês).
+
+- O filtro vai **pra API**, não é filtragem no cliente: `useApiPaginado` ganhou um terceiro
+  parâmetro `filtros` que entra na query string junto de `pagina`/`tamanhoPagina`. Chave com valor
+  `undefined` é omitida, então "sem mês selecionado" vira "sem filtro" naturalmente. Filtrar no
+  cliente aqui quebraria a paginação: a página 1 traria 20 itens de todos os meses e sobraria um
+  punhado depois do filtro.
+- ⚠️ O objeto de filtros é **serializado com `JSON.stringify` pra virar dependência do efeito** —
+  como literal montado no corpo do componente, ele é referência nova a cada render e o efeito
+  rodaria em loop.
+- **Trocar de mês chama `irPara(1)` no mesmo handler**, não num efeito: a página 4 do mês passado
+  pode não existir no mês novo, e a tabela apareceria vazia sem explicação. O hook não faz isso
+  sozinho de propósito — só quem mexeu no filtro sabe se a mudança invalida a posição atual.
+- **Salvar um lançamento datado fora do mês filtrado move o filtro pra o mês dele**
+  (`irParaOMesDaData`) — senão o usuário via "cadastrada com sucesso" e uma lista sem ela. Vale pro
+  criar, pro editar e pra compra parcelada (que usa o mês da primeira parcela).
+
+**`PainelMensal.tsx` passou a usar o filtro da API** (`&ano=&mes=` no endpoint) em vez de buscar 200
+itens e filtrar por `t.data.startsWith(...)` no cliente. Não é só simplificação: a janela de 200
+**escondia meses inteiros** assim que a família passava de 200 transações no total, porque ela só
+alcançava as mais recentes.
 
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 

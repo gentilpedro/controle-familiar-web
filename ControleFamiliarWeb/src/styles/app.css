@@ -283,12 +283,13 @@ a {
 
 /* ---------- Formularios ---------- */
 
-/* Descrição, Valor, Data, Tipo, Pessoa, Categoria, Salvar, Cancelar — só o
-   form de Transações usa a variante sem classe (Pessoas/Categorias usam as
-   variantes abaixo, com menos campos). */
+/* Descrição, Valor, Data, Tipo, Pessoa, Categoria, Forma de pagamento,
+   Salvar, Cancelar — só o form de Transações usa a variante sem classe
+   (Pessoas/Categorias/Formas de pagamento usam as variantes abaixo, com
+   menos campos). */
 .form-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.2fr auto auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.2fr 1.2fr auto auto;
   gap: 12px;
   align-items: center;
 }
@@ -296,6 +297,11 @@ a {
 .form-row.pessoas,
 .form-row.categorias {
   grid-template-columns: 2fr 1fr auto auto;
+}
+
+/* Só descrição + os dois botões: uma coluna a menos que .categorias. */
+.form-row.formas-pagamento {
+  grid-template-columns: 2fr auto auto;
 }
 
 .input,
@@ -848,7 +854,8 @@ a {
 @media (max-width: 1100px) {
   .form-row,
   .form-row.pessoas,
-  .form-row.categorias {
+  .form-row.categorias,
+  .form-row.formas-pagamento {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1034,7 +1041,8 @@ a {
 @media (max-width: 560px) {
   .form-row,
   .form-row.pessoas,
-  .form-row.categorias {
+  .form-row.categorias,
+  .form-row.formas-pagamento {
     grid-template-columns: 1fr;
   }
 

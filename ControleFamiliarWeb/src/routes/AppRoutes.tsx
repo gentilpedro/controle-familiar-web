@@ -8,6 +8,7 @@ import RotaNaoEncontrada from "./RotaNaoEncontrada";
 
 const Home = lazy(() => import("../pages/Home"));
 const Categorias = lazy(() => import("../pages/Categorias"));
+const FormasPagamento = lazy(() => import("../pages/FormasPagamento"));
 const Transacoes = lazy(() => import("../pages/Transacoes"));
 const Relatorios = lazy(() => import("../pages/Relatorio"));
 const RelatorioFamiliar = lazy(() => import("../pages/RelatorioFamiliar"));
@@ -43,6 +44,7 @@ export default function AppRoutes() {
             >
               <Route index element={<Home />} />
               <Route path="categorias" element={<Categorias />} />
+              <Route path="formas-pagamento" element={<FormasPagamento />} />
               <Route path="transacoes" element={<Transacoes />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="painel-mensal" element={<PainelMensal />} />

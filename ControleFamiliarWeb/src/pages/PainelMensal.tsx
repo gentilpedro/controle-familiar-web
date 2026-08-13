@@ -20,15 +20,16 @@ function mesAtualLocal(): string {
 }
 
 export default function PainelMensal() {
-  // Busca uma janela generosa de transações uma vez só e filtra por mês no
-  // cliente — evita abrir mais uma frente de mudança de contrato em
-  // GET /transacoes (filtro de período por query fica fora de escopo aqui).
-  const { dados: transacoes, carregando, erro, recarregar } = useApiResource<Transacao>(
-    "/transacoes?pagina=1&tamanhoPagina=200"
-  );
-
   const [mesSelecionado, setMesSelecionado] = useState(mesAtualLocal());
   const [ano, mes] = mesSelecionado.split("-").map(Number);
+
+  // Filtro de período pela própria API (ano/mes na query). Antes isto buscava
+  // uma janela de 200 lançamentos e filtrava por mês no cliente — o que
+  // escondia meses inteiros assim que a família passava de 200 transações no
+  // total, porque a janela só alcançava os mais recentes.
+  const { dados: transacoesDoMes, carregando, erro, recarregar } = useApiResource<Transacao>(
+    `/transacoes?pagina=1&tamanhoPagina=200&ano=${ano}&mes=${mes}`
+  );
 
   const [resumo, setResumo] = useState<ResumoMensal | null>(null);
   const [resumoCarregando, setResumoCarregando] = useState(true);
@@ -61,8 +62,6 @@ export default function PainelMensal() {
       cancelado = true;
     };
   }, [buscarResumo]);
-
-  const transacoesDoMes = transacoes.filter((t) => t.data.startsWith(mesSelecionado));
 
   // Mesmo toggle direto da tabela de Transações — só que aqui também refaz o
   // resumo, já que confirmar/desconfirmar muda receitas/despesas confirmadas
@@ -196,16 +195,17 @@ export default function PainelMensal() {
                 <th>Status</th>
                 <th>Pessoa</th>
                 <th>Categoria</th>
+                <th>Pagamento</th>
               </tr>
             </thead>
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan={7}>Carregando...</td>
+                  <td colSpan={8}>Carregando...</td>
                 </tr>
               ) : transacoesDoMes.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>Nenhuma transação neste mês.</td>
+                  <td colSpan={8}>Nenhuma transação neste mês.</td>
                 </tr>
               ) : (
                 transacoesDoMes.map((t) => (
@@ -245,6 +245,7 @@ export default function PainelMensal() {
                     </td>
                     <td data-rotulo="Pessoa">{t.pessoa}</td>
                     <td data-rotulo="Categoria">{t.categoria}</td>
+                    <td data-rotulo="Pagamento">{t.formaPagamento ?? "—"}</td>
                   </tr>
                 ))
               )}
