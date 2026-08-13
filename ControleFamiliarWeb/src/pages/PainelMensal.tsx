@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api/api";
 
+import type { Fatura } from "../types/Fatura";
 import type { Transacao } from "../types/Transacao";
 import type { ApiEnvelope } from "../types/Auth";
 import type { ResumoMensal } from "../types/PainelMensal";
@@ -30,6 +32,13 @@ export default function PainelMensal() {
   const { dados: transacoesDoMes, carregando, erro, recarregar } = useApiResource<Transacao>(
     `/transacoes?pagina=1&tamanhoPagina=200&ano=${ano}&mes=${mes}`
   );
+
+  // Faturas que vencem neste mês. É só aviso: a fatura não é lançamento, não
+  // entra em receita/despesa/saldo — quem entra é o pagamento que o usuário
+  // lança quando paga. Somar aqui contaria duas vezes (as compras do cartão
+  // já estão na lista acima, cada uma na data em que foram feitas).
+  const { dados: faturasDoMes } = useApiResource<Fatura>(`/faturas?ano=${ano}&mes=${mes}`);
+  const totalFaturas = faturasDoMes.reduce((soma, f) => soma + f.total, 0);
 
   const [resumo, setResumo] = useState<ResumoMensal | null>(null);
   const [resumoCarregando, setResumoCarregando] = useState(true);
@@ -168,6 +177,25 @@ export default function PainelMensal() {
               </div>
             </div>
           </div>
+
+          {/*
+            Fora da summary-grid de propósito: aqueles cards são o saldo do
+            mês, e a fatura não entra nele. Aqui embaixo, com o aviso
+            explícito, não há como confundir com mais uma parcela da conta.
+          */}
+          {faturasDoMes.length > 0 && (
+            <div className="card" style={{ marginBottom: 24 }}>
+              <div className="summary-label">Faturas de cartão vencendo neste mês</div>
+              <div className="summary-value despesa">{formatCurrency(totalFaturas)}</div>
+              <p className="empty-text" style={{ padding: "8px 0 0" }}>
+                {faturasDoMes
+                  .map((f) => `${f.formaPagamento}: ${formatCurrency(f.total)} em ${formatDate(f.dataVencimento)}`)
+                  .join(" · ")}
+                . Não entra no saldo acima — o que conta é o pagamento que você lançar.{" "}
+                <Link to="/painel/faturas">Ver faturas</Link>
+              </p>
+            </div>
+          )}
 
           <div className="card" style={{ marginBottom: 24 }}>
             {resumo.mesFechado ? (

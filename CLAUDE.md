@@ -303,6 +303,30 @@ itens e filtrar por `t.data.startsWith(...)` no cliente. Não é só simplifica�
 **escondia meses inteiros** assim que a família passava de 200 transações no total, porque ela só
 alcançava as mais recentes.
 
+## Faturas de cartão (`src/pages/Faturas.tsx`, desde 2026-08-13)
+
+Marcar uma forma de pagamento como **cartão de crédito** (checkbox em `FormasPagamento.tsx`, que
+revela dia de fechamento, dia de vencimento e a categoria do pagamento da fatura) liga a tela de
+Faturas. Ver "Faturas de cartão" no `CLAUDE.md` da API pra regra do ciclo.
+
+- **A tela é só leitura, de propósito** (decisão do usuário): mostra quanto o cartão acumulou, o
+  período, quando vence e se já existe pagamento lançado na categoria vinculada. Não tem botão de
+  pagar, não marca transação como paga, não cria despesa. Se um dia isso mudar, é bloco novo.
+- **Topo**: fatura aberta de cada cartão (`/faturas/abertas`), independente do mês escolhido — é o
+  "quanto já gastei neste ciclo". Ela só apareceria na parte de baixo no mês em que vier a vencer.
+- **Baixo**: as faturas que **vencem** no mês do seletor (`/faturas?ano=&mes=`), cada uma com a
+  tabela dos lançamentos do ciclo.
+- `situacaoDoPagamento` compara `totalPagamentosLancados` com `total` e diz uma de quatro coisas
+  (sem categoria vinculada / nenhum pagamento / pagamento igual / pagamento diferente). Comparação
+  de igualdade direta em `number` — os dois lados vêm do mesmo `decimal` da API, não de conta
+  feita aqui.
+- ⚠️ **`.form-row.formas-pagamento.cartao` precisa aparecer nos media queries com as três classes.**
+  Com duas (`.form-row.formas-pagamento`) a regra do media query perde em especificidade e o
+  formulário fica com 6 colunas no celular. Mesmo tipo de armadilha do `.btn.sidebar-sair`.
+- **Painel do Mês ganhou um aviso** de faturas vencendo no mês, **fora da `summary-grid`**: a fatura
+  não entra no saldo (as compras do cartão já estão na lista de transações, cada uma na data em que
+  foram feitas) e somá-la ali contaria duas vezes. O texto diz isso explicitamente.
+
 ## Relatório Familiar (`src/pages/RelatorioFamiliar.tsx`, desde 2026-08-12)
 
 Segunda página de relatório, focada em comparar pessoas entre si — o Dashboard (`Relatorio.tsx`)

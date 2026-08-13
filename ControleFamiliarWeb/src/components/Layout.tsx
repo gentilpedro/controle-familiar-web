@@ -49,6 +49,7 @@ export default function Layout() {
             <Link className="sidebar-link" to="/painel/formas-pagamento">Formas de Pagamento</Link>
             <Link className="sidebar-link" to="/painel/transacoes">Transações</Link>
             <Link className="sidebar-link" to="/painel/painel-mensal">Painel do Mês</Link>
+            <Link className="sidebar-link" to="/painel/faturas">Faturas</Link>
             <Link className="sidebar-link" to="/painel/relatorios">Relatórios</Link>
             {/*
               Numa família de uma pessoa só, comparar "participação de cada
